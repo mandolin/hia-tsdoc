@@ -1,0 +1,7 @@
+{
+  "name": "@hia-doc/ts-jsdoc-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bridge between TSDoc and JSDoc artifacts.",
+  "license": "MIT"
+}

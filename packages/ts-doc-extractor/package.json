@@ -1,0 +1,7 @@
+{
+  "name": "@hia-doc/ts-doc-extractor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript source to TSDoc extraction artifact.",
+  "license": "MIT"
+}

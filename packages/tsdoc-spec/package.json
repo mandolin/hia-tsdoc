@@ -1,0 +1,7 @@
+{
+  "name": "@hia-doc/tsdoc-spec",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript/TSDoc documentation annotation, tag registry and rule drafts.",
+  "license": "MIT"
+}
