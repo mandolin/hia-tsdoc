@@ -1,0 +1,52 @@
+{
+  "contract": "hia-ts-jsdoc-bridge",
+  "contractVersion": "0.1.0-draft",
+  "producer": {
+    "name": "@hia-doc/ts-jsdoc-bridge",
+    "version": "0.0.0"
+  },
+  "source": {
+    "kind": "typescript",
+    "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
+    "language": "typescript",
+    "sourcesContentPolicy": "none"
+  },
+  "artifact": {
+    "kind": "generated-js",
+    "path": "fixtures/doc-source-map/ts-js/dist/calculator.js",
+    "language": "javascript"
+  },
+  "runtimeSymbols": [
+    {
+      "id": "function:add",
+      "name": "add",
+      "kind": "ts-runtime-function",
+      "jsName": "add",
+      "summary": "Adds two numeric values.",
+      "source": {
+        "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
+        "range": {
+          "start": {
+            "line": 8,
+            "column": 1
+          },
+          "end": {
+            "line": 10,
+            "column": 2
+          }
+        },
+        "rangeSource": "fixture-scanner",
+        "confidence": "medium"
+      }
+    }
+  ],
+  "typeOnlySymbols": [
+    {
+      "id": "interface:AddInput",
+      "name": "AddInput",
+      "kind": "ts-interface",
+      "bridgeStatus": "ts-only"
+    }
+  ],
+  "diagnostics": []
+}

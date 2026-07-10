@@ -1,0 +1,201 @@
+{
+  "contract": "hia-tsdoc-extraction",
+  "contractVersion": "0.1.0-draft",
+  "producer": {
+    "name": "@hia-doc/ts-doc-extractor",
+    "version": "0.0.0"
+  },
+  "profile": {
+    "name": "tsdoc",
+    "version": "0.1.0-draft"
+  },
+  "source": {
+    "kind": "typescript",
+    "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
+    "language": "typescript",
+    "sourcesContentPolicy": "none"
+  },
+  "artifacts": [
+    {
+      "id": "artifact:js:generated",
+      "kind": "generated-js",
+      "path": "fixtures/doc-source-map/ts-js/dist/calculator.js",
+      "language": "javascript"
+    }
+  ],
+  "symbols": [
+    {
+      "id": "function:add",
+      "name": "add",
+      "kind": "ts-runtime-function",
+      "classification": "runtime",
+      "exported": true,
+      "signature": "input: AddInput",
+      "source": {
+        "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
+        "range": {
+          "start": {
+            "line": 8,
+            "column": 1
+          },
+          "end": {
+            "line": 10,
+            "column": 2
+          }
+        },
+        "rangeSource": "fixture-scanner",
+        "confidence": "medium"
+      },
+      "runtime": {
+        "emitted": true,
+        "jsName": "add"
+      },
+      "comment": {
+        "range": {
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 7,
+            "column": 4
+          }
+        },
+        "summary": "Adds two numeric values.",
+        "tags": [
+          {
+            "tag": "public",
+            "value": "",
+            "known": true
+          },
+          {
+            "tag": "param",
+            "value": "input - The values to add.",
+            "known": true
+          },
+          {
+            "tag": "returns",
+            "value": "The sum of `left` and `right`.",
+            "known": true
+          }
+        ],
+        "parserDiagnostics": []
+      }
+    },
+    {
+      "id": "interface:AddInput",
+      "name": "AddInput",
+      "kind": "ts-interface",
+      "classification": "type-only",
+      "exported": true,
+      "source": {
+        "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
+        "range": {
+          "start": {
+            "line": 17,
+            "column": 1
+          },
+          "end": {
+            "line": 20,
+            "column": 2
+          }
+        },
+        "rangeSource": "fixture-scanner",
+        "confidence": "medium"
+      },
+      "runtime": {
+        "emitted": false,
+        "reason": "type-only"
+      },
+      "comment": {
+        "range": {
+          "start": {
+            "line": 12,
+            "column": 1
+          },
+          "end": {
+            "line": 16,
+            "column": 4
+          }
+        },
+        "summary": "Input values for {@link add}.",
+        "tags": [
+          {
+            "tag": "public",
+            "value": "",
+            "known": true
+          }
+        ],
+        "parserDiagnostics": []
+      }
+    }
+  ],
+  "comments": [
+    {
+      "symbolId": "function:add",
+      "range": {
+        "start": {
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "line": 7,
+          "column": 4
+        }
+      },
+      "summary": "Adds two numeric values.",
+      "tags": [
+        {
+          "tag": "public",
+          "value": "",
+          "known": true
+        },
+        {
+          "tag": "param",
+          "value": "input - The values to add.",
+          "known": true
+        },
+        {
+          "tag": "returns",
+          "value": "The sum of `left` and `right`.",
+          "known": true
+        }
+      ],
+      "parserDiagnostics": []
+    },
+    {
+      "symbolId": "interface:AddInput",
+      "range": {
+        "start": {
+          "line": 12,
+          "column": 1
+        },
+        "end": {
+          "line": 16,
+          "column": 4
+        }
+      },
+      "summary": "Input values for {@link add}.",
+      "tags": [
+        {
+          "tag": "public",
+          "value": "",
+          "known": true
+        }
+      ],
+      "parserDiagnostics": []
+    }
+  ],
+  "diagnostics": [],
+  "metadata": {
+    "extractor": {
+      "name": "@hia-doc/ts-doc-extractor",
+      "mode": "ts7-cli-fixture-scanner"
+    },
+    "tsdoc": {
+      "parser": "@microsoft/tsdoc"
+    },
+    "typeOnlyBoundary": "type-only symbols remain in TS extraction artifact and adapter metadata in P1",
+    "compilerApiNote": "TypeScript 7 public package entry no longer exposes the legacy compiler API; P1 uses tsc output and a conservative declaration scanner."
+  }
+}

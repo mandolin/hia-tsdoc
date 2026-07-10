@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "0.2.0",
+  "id": "fixture.ts.calculator",
+  "title": "TypeScript Calculator Fixture",
+  "defaultLocale": "en",
+  "locales": [
+    "en"
+  ],
+  "nodes": [
+    {
+      "id": "root",
+      "kind": "root",
+      "title": "TypeScript Calculator Fixture",
+      "symbolIds": [
+        "function:add"
+      ]
+    }
+  ],
+  "symbols": [
+    {
+      "id": "function:add",
+      "name": "add",
+      "kind": "function",
+      "signature": "input: AddInput",
+      "summary": "Adds two numeric values.",
+      "source": {
+        "model": "hia-source",
+        "modelVersion": "0.2.0",
+        "mode": "link",
+        "definedIn": {
+          "kind": "defined-in",
+          "relativePath": "fixtures/doc-source-map/ts-js/src/calculator.ts",
+          "language": "typescript",
+          "position": {
+            "line": 8,
+            "column": 1
+          },
+          "range": {
+            "start": {
+              "line": 8,
+              "column": 1
+            },
+            "end": {
+              "line": 10,
+              "column": 2
+            }
+          },
+          "link": {
+            "enabled": false,
+            "openMode": "same-tab"
+          }
+        },
+        "primaryBlock": null,
+        "references": [],
+        "fragments": [],
+        "diagnostics": []
+      },
+      "diagnostics": [],
+      "metadata": {
+        "tsdoc": {
+          "classification": "runtime",
+          "tsKind": "ts-runtime-function",
+          "comment": {
+            "range": {
+              "start": {
+                "line": 1,
+                "column": 1
+              },
+              "end": {
+                "line": 7,
+                "column": 4
+              }
+            },
+            "summary": "Adds two numeric values.",
+            "tags": [
+              {
+                "tag": "public",
+                "value": "",
+                "known": true
+              },
+              {
+                "tag": "param",
+                "value": "input - The values to add.",
+                "known": true
+              },
+              {
+                "tag": "returns",
+                "value": "The sum of `left` and `right`.",
+                "known": true
+              }
+            ],
+            "parserDiagnostics": []
+          }
+        }
+      }
+    }
+  ],
+  "diagnostics": [],
+  "metadata": {
+    "sourceContract": "hia-tsdoc-extraction",
+    "sourceContractVersion": "0.1.0-draft",
+    "producer": {
+      "name": "@hia-doc/ts-doc-extractor",
+      "version": "0.0.0"
+    },
+    "typeOnlySymbols": [
+      {
+        "id": "interface:AddInput",
+        "name": "AddInput",
+        "kind": "ts-interface",
+        "source": {
+          "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
+          "range": {
+            "start": {
+              "line": 17,
+              "column": 1
+            },
+            "end": {
+              "line": 20,
+              "column": 2
+            }
+          },
+          "rangeSource": "fixture-scanner",
+          "confidence": "medium"
+        },
+        "comment": {
+          "range": {
+            "start": {
+              "line": 12,
+              "column": 1
+            },
+            "end": {
+              "line": 16,
+              "column": 4
+            }
+          },
+          "summary": "Input values for {@link add}.",
+          "tags": [
+            {
+              "tag": "public",
+              "value": "",
+              "known": true
+            }
+          ],
+          "parserDiagnostics": []
+        }
+      }
+    ],
+    "docSourceMaps": [
+      {
+        "contract": "doc-source-map",
+        "contractVersion": "0.1.0-draft",
+        "path": "fixtures/doc-source-map/ts-js/dist/calculator.docmap.json",
+        "entryArtifact": "fixtures/doc-source-map/ts-js/dist/calculator.js"
+      }
+    ]
+  }
+}

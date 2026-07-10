@@ -1,0 +1,203 @@
+{
+  "contract": "doc-source-map",
+  "contractVersion": "0.1.0-draft",
+  "id": "docmap:ts-js:calculator",
+  "producer": {
+    "name": "@hia-doc/ts-to-js-doc-source-map",
+    "version": "0.0.0",
+    "profile": "ts-jsdoc-bridge"
+  },
+  "artifacts": [
+    {
+      "id": "artifact:js:generated",
+      "kind": "generated-js",
+      "path": "fixtures/doc-source-map/ts-js/dist/calculator.js",
+      "language": "javascript",
+      "role": "generated",
+      "contractRefs": [
+        {
+          "contract": "hia-ts-jsdoc-bridge",
+          "path": "fixtures/doc-source-map/ts-js/dist/calculator.jsdoc-bridge.json"
+        }
+      ]
+    },
+    {
+      "id": "artifact:tsdoc:extraction",
+      "kind": "extraction-artifact",
+      "path": "fixtures/doc-source-map/ts-js/dist/calculator.tsdoc.json",
+      "language": "json",
+      "role": "generated",
+      "contractRefs": [
+        {
+          "contract": "hia-tsdoc-extraction",
+          "path": "fixtures/doc-source-map/ts-js/dist/calculator.tsdoc.json"
+        }
+      ]
+    },
+    {
+      "id": "artifact:hia:document",
+      "kind": "extraction-artifact",
+      "path": "fixtures/doc-source-map/ts-js/dist/calculator.hia.json",
+      "language": "json",
+      "role": "generated"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source:ts:fixtures-doc-source-map-ts-js-src-calculator-ts",
+      "kind": "typescript-source",
+      "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
+      "language": "typescript",
+      "role": "original",
+      "sourcesContentPolicy": "none"
+    }
+  ],
+  "sourceMaps": [
+    {
+      "id": "sourcemap:ts-js:document",
+      "kind": "ordinary-source-map",
+      "format": "source-map-v3",
+      "path": "fixtures/doc-source-map/ts-js/dist/calculator.js.map",
+      "mapsFrom": "artifact:js:generated",
+      "mapsTo": [
+        "source:ts:fixtures-doc-source-map-ts-js-src-calculator-ts"
+      ],
+      "sourcesContentPolicy": "none",
+      "pointer": {
+        "status": "not-written",
+        "reservedExtensionField": "x_doc_source_map"
+      }
+    }
+  ],
+  "chains": [
+    {
+      "id": "chain:ts-js:document",
+      "stages": [
+        {
+          "from": "source:ts:fixtures-doc-source-map-ts-js-src-calculator-ts",
+          "to": "artifact:js:generated",
+          "transform": "typescript-compiler",
+          "sourceMap": "sourcemap:ts-js:document",
+          "linkage": [
+            "entry:function-add",
+            "entry:interface-addinput"
+          ]
+        },
+        {
+          "from": "artifact:js:generated",
+          "to": "artifact:hia:document",
+          "transform": "tsdoc-to-hia-core",
+          "sourceMap": null,
+          "linkage": [
+            "entry:function-add"
+          ]
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "entry:function-add",
+      "kind": "symbol",
+      "symbolKind": "ts-runtime-function",
+      "symbolId": "function:add",
+      "classification": "runtime",
+      "annotation": {
+        "summary": "Adds two numeric values.",
+        "tags": [
+          {
+            "tag": "public",
+            "value": "",
+            "known": true
+          },
+          {
+            "tag": "param",
+            "value": "input - The values to add.",
+            "known": true
+          },
+          {
+            "tag": "returns",
+            "value": "The sum of `left` and `right`.",
+            "known": true
+          }
+        ]
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "source:ts:fixtures-doc-source-map-ts-js-src-calculator-ts",
+          "range": {
+            "start": {
+              "line": 1,
+              "column": 1
+            },
+            "end": {
+              "line": 7,
+              "column": 4
+            }
+          },
+          "rangeSource": "typescript-compiler",
+          "confidence": "high"
+        }
+      ],
+      "artifactRefs": [
+        {
+          "artifactId": "artifact:js:generated",
+          "symbolName": "add",
+          "rangeSource": "source-map",
+          "confidence": "medium"
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "id": "entry:interface-addinput",
+      "kind": "symbol",
+      "symbolKind": "ts-interface",
+      "symbolId": "interface:AddInput",
+      "classification": "type-only",
+      "annotation": {
+        "summary": "Input values for {@link add}.",
+        "tags": [
+          {
+            "tag": "public",
+            "value": "",
+            "known": true
+          }
+        ]
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "source:ts:fixtures-doc-source-map-ts-js-src-calculator-ts",
+          "range": {
+            "start": {
+              "line": 12,
+              "column": 1
+            },
+            "end": {
+              "line": 16,
+              "column": 4
+            }
+          },
+          "rangeSource": "typescript-compiler",
+          "confidence": "high"
+        }
+      ],
+      "artifactRefs": [],
+      "diagnostics": [
+        "TS_TYPE_ONLY_NO_JS_EMIT"
+      ]
+    }
+  ],
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "allowAbsolutePaths": false,
+    "allowUncPaths": false,
+    "allowPathTraversal": false,
+    "releaseGate": {
+      "requireExplicitEmbedOptIn": true,
+      "failOnUnsafePath": true,
+      "failOnUnexpectedSourcesContent": true
+    }
+  },
+  "diagnostics": []
+}

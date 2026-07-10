@@ -3,5 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "description": "TypeScript source to TSDoc extraction artifact.",
-  "license": "MIT"
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "dependencies": {
+    "@hia-doc/tsdoc-spec": "0.0.0",
+    "@microsoft/tsdoc": "0.16.0"
+  }
 }

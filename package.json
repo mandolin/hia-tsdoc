@@ -5,12 +5,14 @@
   "description": "Workspace for HIA TypeScript/TSDoc documentation packages.",
   "license": "MIT",
   "scripts": {
+    "build:fixtures": "node scripts/build-fixtures.cjs",
+    "check:fixtures": "node scripts/check-fixtures.cjs",
     "check:skeleton": "node scripts/check-skeleton.cjs",
-    "check:syntax": "node --check scripts/check-skeleton.cjs && node --check scripts/check-license-audit.cjs && node --check scripts/release-check.cjs",
+    "check:syntax": "node --check scripts/check-skeleton.cjs && node --check scripts/check-license-audit.cjs && node --check scripts/release-check.cjs && node --check scripts/build-fixtures.cjs && node --check scripts/check-fixtures.cjs && node --check packages/tsdoc-spec/src/index.mjs && node --check packages/ts-doc-extractor/src/index.mjs && node --check packages/ts-doc-adapter/src/index.mjs && node --check packages/ts-to-js-doc-source-map/src/index.mjs && node --check packages/ts-jsdoc-bridge/src/index.mjs",
     "license:audit": "node scripts/check-license-audit.cjs",
     "release:check": "node scripts/release-check.cjs",
-    "release:gate": "npm run check:syntax && npm run check:skeleton && npm run license:audit && npm run release:check && npm pack --dry-run --json",
-    "test": "npm run check:skeleton",
+    "release:gate": "npm run check:syntax && npm run build:fixtures && npm run check:skeleton && npm run check:fixtures && npm run license:audit && npm test && npm run release:check && npm pack --dry-run --json",
+    "test": "npm run build:fixtures && node --test test",
     "test:all": "npm run release:gate"
   },
   "workspaces": [
@@ -18,5 +20,9 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@microsoft/tsdoc": "0.16.0",
+    "typescript": "7.0.2"
   }
 }
