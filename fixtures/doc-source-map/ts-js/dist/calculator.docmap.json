@@ -1,7 +1,7 @@
 {
   "contract": "doc-source-map",
   "contractVersion": "0.1.0-draft",
-  "id": "docmap:ts-js:calculator",
+  "id": "docmap:ts-js:fixtures-doc-source-map-ts-js-src-calculator-ts",
   "producer": {
     "name": "@hia-doc/ts-to-js-doc-source-map",
     "version": "0.0.0",
@@ -11,33 +11,33 @@
     {
       "id": "artifact:js:generated",
       "kind": "generated-js",
-      "path": "fixtures/doc-source-map/ts-js/dist/calculator.js",
+      "path": "calculator.js",
       "language": "javascript",
       "role": "generated",
       "contractRefs": [
         {
           "contract": "hia-ts-jsdoc-bridge",
-          "path": "fixtures/doc-source-map/ts-js/dist/calculator.jsdoc-bridge.json"
+          "path": "calculator.jsdoc-bridge.json"
         }
       ]
     },
     {
       "id": "artifact:tsdoc:extraction",
       "kind": "extraction-artifact",
-      "path": "fixtures/doc-source-map/ts-js/dist/calculator.tsdoc.json",
+      "path": "calculator.tsdoc.json",
       "language": "json",
       "role": "generated",
       "contractRefs": [
         {
           "contract": "hia-tsdoc-extraction",
-          "path": "fixtures/doc-source-map/ts-js/dist/calculator.tsdoc.json"
+          "path": "calculator.tsdoc.json"
         }
       ]
     },
     {
       "id": "artifact:hia:document",
       "kind": "extraction-artifact",
-      "path": "fixtures/doc-source-map/ts-js/dist/calculator.hia.json",
+      "path": "calculator.hia.json",
       "language": "json",
       "role": "generated"
     }
@@ -57,7 +57,7 @@
       "id": "sourcemap:ts-js:document",
       "kind": "ordinary-source-map",
       "format": "source-map-v3",
-      "path": "fixtures/doc-source-map/ts-js/dist/calculator.js.map",
+      "path": "calculator.js.map",
       "mapsFrom": "artifact:js:generated",
       "mapsTo": [
         "source:ts:fixtures-doc-source-map-ts-js-src-calculator-ts"

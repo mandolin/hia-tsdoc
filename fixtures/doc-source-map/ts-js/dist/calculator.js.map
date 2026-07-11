@@ -8,5 +8,8 @@
   "sourcesContent": [],
   "names": [],
   "mappings": "AAAA;;;;;;GAMG;AACH,MAAM,UAAU,GAAG,CAAC,KAAe;IACjC,OAAO,KAAK,CAAC,IAAI,GAAG,KAAK,CAAC,KAAK,CAAC;AAClC,CAAC",
-  "x_fixture_note": "TypeScript 7.0.2 generated source map normalized for fixture path privacy."
+  "x_compiler": {
+    "name": "typescript",
+    "version": "7.0.2"
+  }
 }

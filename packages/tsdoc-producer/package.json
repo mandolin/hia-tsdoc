@@ -1,0 +1,22 @@
+{
+  "name": "@hia-doc/tsdoc-producer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Documentation producer adapter for TSDoc.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@hia-doc/tsdoc-runner": "0.0.0"
+  }
+}

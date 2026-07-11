@@ -1,7 +1,7 @@
 {
   "schemaVersion": "0.2.0",
-  "id": "fixture.ts.calculator",
-  "title": "TypeScript Calculator Fixture",
+  "id": "tsdoc:fixtures/doc-source-map/ts-js/src/calculator.ts",
+  "title": "calculator.ts",
   "defaultLocale": "en",
   "locales": [
     "en"
@@ -10,7 +10,7 @@
     {
       "id": "root",
       "kind": "root",
-      "title": "TypeScript Calculator Fixture",
+      "title": "calculator.ts",
       "symbolIds": [
         "function:add"
       ]
@@ -150,8 +150,8 @@
       {
         "contract": "doc-source-map",
         "contractVersion": "0.1.0-draft",
-        "path": "fixtures/doc-source-map/ts-js/dist/calculator.docmap.json",
-        "entryArtifact": "fixtures/doc-source-map/ts-js/dist/calculator.js"
+        "path": "calculator.docmap.json",
+        "entryArtifact": "calculator.js"
       }
     ]
   }

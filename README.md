@@ -11,6 +11,8 @@ This repository is an umbrella monorepo for TypeScript/TSDoc documentation speci
 - `@hia-doc/ts-doc-adapter`: TSDoc extraction artifact to HIA core document.
 - `@hia-doc/ts-to-js-doc-source-map`: TypeScript to JavaScript documentation source-map linkage.
 - `@hia-doc/ts-jsdoc-bridge`: TSDoc and JSDoc bridge.
+- `@hia-doc/tsdoc-runner`: standalone TypeScript/TSDoc project runner and CLI.
+- `@hia-doc/tsdoc-producer`: HIA documentation producer adapter backed by the runner.
 
 ## Status
 
@@ -21,6 +23,8 @@ This workspace now includes the first TypeScript -> JavaScript generated-source 
 - Runtime symbols and type-only symbols are separated in the TS extraction artifact.
 - Type-only symbols remain in TS artifact/HIA metadata for P1 and are not promoted to stable HIA core symbol kinds.
 - `doc-source-map` records TS source ranges, generated JS artifact references, ordinary source map references and type-only diagnostics.
+- `@hia-doc/tsdoc-runner` can run the same pipeline from JSON config or CLI inputs and emit a `documentation-producer-result`.
+- `@hia-doc/tsdoc-producer` exposes the same runner through the producer contract for HIA-Documentation-Sys orchestration.
 
 API Extractor and TypeDoc are not P1 runtime dependencies. They remain P2 bridge candidates.
 
@@ -40,6 +44,7 @@ The P1 fixture covers:
 ```sh
 npm install
 npm run build:fixtures
+npm run smoke:standalone
 npm run check:fixtures
 npm run release:gate
 ```

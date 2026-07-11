@@ -18,6 +18,31 @@ const approvedDependencies = {
     version: "0.0.0",
     license: "MIT",
     purpose: "Internal workspace package."
+  },
+  "@hia-doc/ts-doc-adapter": {
+    version: "0.0.0",
+    license: "MIT",
+    purpose: "Internal workspace package."
+  },
+  "@hia-doc/ts-doc-extractor": {
+    version: "0.0.0",
+    license: "MIT",
+    purpose: "Internal workspace package."
+  },
+  "@hia-doc/ts-jsdoc-bridge": {
+    version: "0.0.0",
+    license: "MIT",
+    purpose: "Internal workspace package."
+  },
+  "@hia-doc/ts-to-js-doc-source-map": {
+    version: "0.0.0",
+    license: "MIT",
+    purpose: "Internal workspace package."
+  },
+  "@hia-doc/tsdoc-runner": {
+    version: "0.0.0",
+    license: "MIT",
+    purpose: "Internal workspace package."
   }
 };
 

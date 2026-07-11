@@ -19,7 +19,7 @@
     {
       "id": "artifact:js:generated",
       "kind": "generated-js",
-      "path": "fixtures/doc-source-map/ts-js/dist/calculator.js",
+      "path": "calculator.js",
       "language": "javascript"
     }
   ],
