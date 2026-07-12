@@ -225,16 +225,21 @@ async function compileTypeScriptInput({ input, request, source, jsPath, sourceMa
   try {
     const tscBin = resolveTypeScriptCli();
     const sourceAbsolutePath = path.resolve(request.workspaceRoot, input.path);
-    const result = spawnSync(process.execPath, [
+    const compilerArgs = [
       tscBin,
+      ...(request.options.ignoreConfig ? ["--ignoreConfig"] : []),
       "--target", request.options.target,
       "--module", request.options.module,
+      ...(request.options.moduleResolution ? ["--moduleResolution", request.options.moduleResolution] : []),
+      ...(request.options.lib.length > 0 ? ["--lib", request.options.lib.join(",")] : []),
+      ...(request.options.types.length > 0 ? ["--types", request.options.types.join(",")] : []),
       "--sourceMap", "true",
       "--inlineSources", "false",
       "--declaration", "false",
       "--outDir", temporaryRoot,
       sourceAbsolutePath
-    ], {
+    ];
+    const result = spawnSync(process.execPath, compilerArgs, {
       cwd: request.workspaceRoot,
       encoding: "utf8"
     });
@@ -329,7 +334,7 @@ function normalizeRequest(value) {
 
   const runnerOptions = value.options ?? {};
   assertRecord(runnerOptions, "options must be an object.");
-  assertKnownKeys(runnerOptions, ["emitDocSourceMap", "module", "sourcesContentPolicy", "target", "writeResultManifest"], "options");
+  assertKnownKeys(runnerOptions, ["emitDocSourceMap", "ignoreConfig", "lib", "module", "moduleResolution", "sourcesContentPolicy", "target", "types", "writeResultManifest"], "options");
   const sourcesContentPolicy = runnerOptions.sourcesContentPolicy ?? "none";
   if (!["none", "reference", "embed"].includes(sourcesContentPolicy)) {
     throw new TypeError(`Unsupported sourcesContentPolicy: ${sourcesContentPolicy}`);
@@ -346,9 +351,13 @@ function normalizeRequest(value) {
     profileIds: [...profileIds],
     options: {
       emitDocSourceMap: runnerOptions.emitDocSourceMap !== false,
+      ignoreConfig: runnerOptions.ignoreConfig !== false,
+      lib: normalizeOptionalStringList(runnerOptions.lib, "options.lib"),
       module: runnerOptions.module ?? "ES2020",
+      moduleResolution: typeof runnerOptions.moduleResolution === "string" ? runnerOptions.moduleResolution : null,
       sourcesContentPolicy,
       target: runnerOptions.target ?? "ES2020",
+      types: normalizeOptionalStringList(runnerOptions.types, "options.types"),
       writeResultManifest: runnerOptions.writeResultManifest !== false
     }
   };
@@ -449,6 +458,16 @@ function normalizeConfigDirectory(value, label) {
     throw new TypeError(`${label} must not escape its base directory.`);
   }
   return normalized;
+}
+
+function normalizeOptionalStringList(value, label) {
+  if (value === undefined) {
+    return [];
+  }
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || item.length === 0)) {
+    throw new TypeError(`${label} must be an array of non-empty strings.`);
+  }
+  return [...value];
 }
 
 function assertAbsoluteDirectory(value, label) {

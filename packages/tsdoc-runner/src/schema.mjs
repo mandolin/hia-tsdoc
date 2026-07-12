@@ -43,9 +43,21 @@ export const TSDOC_CONFIG_JSON_SCHEMA = Object.freeze({
       additionalProperties: false,
       properties: {
         emitDocSourceMap: { type: "boolean" },
+        ignoreConfig: { type: "boolean" },
+        lib: {
+          type: "array",
+          minItems: 1,
+          items: { type: "string", minLength: 1 }
+        },
         module: { type: "string" },
+        moduleResolution: { type: "string" },
         sourcesContentPolicy: { enum: ["none", "reference", "embed"] },
         target: { type: "string" },
+        types: {
+          type: "array",
+          minItems: 1,
+          items: { type: "string", minLength: 1 }
+        },
         writeResultManifest: { type: "boolean" }
       }
     },
