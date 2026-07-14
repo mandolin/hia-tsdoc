@@ -64,6 +64,12 @@ if (rootPackage.private !== true) {
   failed = true;
 }
 
+const runnerSchema = fs.readFileSync(path.join(root, "packages", "tsdoc-runner", "src", "schema.mjs"), "utf8");
+if (!runnerSchema.includes("skipLibCheck")) {
+  console.error("TSDoc runner config schema must expose skipLibCheck for target project pilots.");
+  failed = true;
+}
+
 if (failed) {
   process.exit(1);
 }

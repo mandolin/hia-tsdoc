@@ -20,7 +20,7 @@
     "sourcesContentPolicy": "none",
     "target": "ES2022",
     "module": "ES2022",
+    "skipLibCheck": true,
     "writeResultManifest": true
   }
 }
-

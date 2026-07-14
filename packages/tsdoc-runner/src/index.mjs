@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { readFile, mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { tsDocToHiaDocument } from "@hia-doc/ts-doc-adapter";
 import { extractTsDoc } from "@hia-doc/ts-doc-extractor";
@@ -76,7 +77,8 @@ export async function runTsDoc(request, context = {}) {
         "TSDOC_RUNNER_INPUT_FAILED",
         `Unable to process TSDoc input ${input.path} (${errorCode(error)}).`,
         "error",
-        input.path
+        input.path,
+        { cause: errorMessage(error) }
       ));
     }
   }
@@ -233,6 +235,7 @@ async function compileTypeScriptInput({ input, request, source, jsPath, sourceMa
       ...(request.options.moduleResolution ? ["--moduleResolution", request.options.moduleResolution] : []),
       ...(request.options.lib.length > 0 ? ["--lib", request.options.lib.join(",")] : []),
       ...(request.options.types.length > 0 ? ["--types", request.options.types.join(",")] : []),
+      ...(request.options.skipLibCheck ? ["--skipLibCheck"] : []),
       "--sourceMap", "true",
       "--inlineSources", "false",
       "--declaration", "false",
@@ -245,11 +248,10 @@ async function compileTypeScriptInput({ input, request, source, jsPath, sourceMa
     });
 
     if (result.error || result.status !== 0) {
-      throw new Error(trimCompilerMessage(result.error?.message ?? result.stderr ?? result.stdout));
+      throw new Error(trimCompilerMessage(result.error?.message || result.stderr || result.stdout));
     }
 
-    const outputStem = path.parse(input.path).name;
-    const compiledJsPath = await findSingleFile(temporaryRoot, `${outputStem}.js`);
+    const compiledJsPath = await findCompiledOutputForSource(temporaryRoot, sourceAbsolutePath);
     const compiledSourceMapPath = `${compiledJsPath}.map`;
     const js = rewriteSourceMappingUrl(await readFile(compiledJsPath, "utf8"), path.posix.basename(sourceMapPath));
     const sourceMap = JSON.parse(await readFile(compiledSourceMapPath, "utf8"));
@@ -286,6 +288,62 @@ async function findSingleFile(directory, fileName) {
     throw new Error(`Expected one compiled output named ${fileName}, found ${matches.length}.`);
   }
   return matches[0];
+}
+
+async function findCompiledOutputForSource(directory, sourceAbsolutePath) {
+  const matches = [];
+  const maps = await listFiles(directory, (filePath) => filePath.endsWith(".js.map"));
+  for (const mapPath of maps) {
+    const sourceMap = JSON.parse(await readFile(mapPath, "utf8"));
+    const sources = Array.isArray(sourceMap.sources) ? sourceMap.sources : [];
+    if (sources.some((source) => sourceMatchesAbsolutePath(source, path.dirname(mapPath), sourceAbsolutePath))) {
+      matches.push(mapPath.replace(/\.map$/u, ""));
+    }
+  }
+
+  if (matches.length === 1) {
+    return matches[0];
+  }
+  if (matches.length > 1) {
+    throw new Error(`Expected one compiled output for ${sourceAbsolutePath}, found ${matches.length}.`);
+  }
+
+  return findSingleFile(directory, `${path.parse(sourceAbsolutePath).name}.js`);
+}
+
+async function listFiles(directory, predicate) {
+  const matches = [];
+  async function visit(currentDirectory) {
+    for (const entry of await readdir(currentDirectory, { withFileTypes: true })) {
+      const entryPath = path.join(currentDirectory, entry.name);
+      if (entry.isDirectory()) {
+        await visit(entryPath);
+      } else if (!predicate || predicate(entryPath)) {
+        matches.push(entryPath);
+      }
+    }
+  }
+  await visit(directory);
+  return matches;
+}
+
+function sourceMatchesAbsolutePath(source, mapDirectory, sourceAbsolutePath) {
+  const sourcePath = resolveSourceMapSource(source, mapDirectory);
+  return normalizeComparablePath(sourcePath) === normalizeComparablePath(sourceAbsolutePath);
+}
+
+function resolveSourceMapSource(source, mapDirectory) {
+  if (typeof source !== "string") {
+    return "";
+  }
+  if (source.startsWith("file:")) {
+    try {
+      return fileURLToPath(source);
+    } catch {
+      return "";
+    }
+  }
+  return path.resolve(mapDirectory, source);
 }
 
 function normalizeSourceMap({ sourceMap, source, sourcePath, sourceMapPath, workspaceRoot, outputDirectory, sourcesContentPolicy }) {
@@ -334,7 +392,7 @@ function normalizeRequest(value) {
 
   const runnerOptions = value.options ?? {};
   assertRecord(runnerOptions, "options must be an object.");
-  assertKnownKeys(runnerOptions, ["emitDocSourceMap", "ignoreConfig", "lib", "module", "moduleResolution", "sourcesContentPolicy", "target", "types", "writeResultManifest"], "options");
+  assertKnownKeys(runnerOptions, ["emitDocSourceMap", "ignoreConfig", "lib", "module", "moduleResolution", "skipLibCheck", "sourcesContentPolicy", "target", "types", "writeResultManifest"], "options");
   const sourcesContentPolicy = runnerOptions.sourcesContentPolicy ?? "none";
   if (!["none", "reference", "embed"].includes(sourcesContentPolicy)) {
     throw new TypeError(`Unsupported sourcesContentPolicy: ${sourcesContentPolicy}`);
@@ -355,6 +413,7 @@ function normalizeRequest(value) {
       lib: normalizeOptionalStringList(runnerOptions.lib, "options.lib"),
       module: runnerOptions.module ?? "ES2020",
       moduleResolution: typeof runnerOptions.moduleResolution === "string" ? runnerOptions.moduleResolution : null,
+      skipLibCheck: runnerOptions.skipLibCheck !== false,
       sourcesContentPolicy,
       target: runnerOptions.target ?? "ES2020",
       types: normalizeOptionalStringList(runnerOptions.types, "options.types"),
@@ -406,12 +465,13 @@ function artifact(id, kind, artifactPath, language, mediaType, profileIds) {
   };
 }
 
-function createDiagnostic(code, message, severity, diagnosticPath) {
+function createDiagnostic(code, message, severity, diagnosticPath, data) {
   return {
     code,
     message,
     severity,
-    ...(diagnosticPath ? { path: diagnosticPath } : {})
+    ...(diagnosticPath ? { path: diagnosticPath } : {}),
+    ...(isJsonObject(data) ? { data } : {})
   };
 }
 
@@ -510,10 +570,19 @@ function errorCode(error) {
   return typeof error?.code === "string" ? error.code : error?.name ?? "Error";
 }
 
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function slug(value) {
   return String(value).trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-|-$/g, "") || "input";
 }
 
 function toPosix(value) {
   return String(value).replaceAll("\\", "/");
+}
+
+function normalizeComparablePath(value) {
+  const normalized = path.resolve(String(value || "")).replaceAll("\\", "/");
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }

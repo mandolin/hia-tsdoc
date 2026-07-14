@@ -51,6 +51,7 @@ export const TSDOC_CONFIG_JSON_SCHEMA = Object.freeze({
         },
         module: { type: "string" },
         moduleResolution: { type: "string" },
+        skipLibCheck: { type: "boolean" },
         sourcesContentPolicy: { enum: ["none", "reference", "embed"] },
         target: { type: "string" },
         types: {

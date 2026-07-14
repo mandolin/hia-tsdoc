@@ -12,6 +12,14 @@ import {
 
 const parser = new TSDocParser();
 
+/**
+ * Extracts a draft TSDoc documentation artifact from one TypeScript source file.
+ *
+ * @lang zh-CN 从单个 TypeScript 源文件提取 TSDoc 文档化草案产物；当前实现是保守声明扫描器，主要覆盖导出的函数、类、接口和类型别名。
+ * @param {string} source TypeScript source text.
+ * @param {{ path?: string, generatedJsPath?: string, sourcesContentPolicy?: string }} [options] Extraction source and artifact options.
+ * @returns {object} Draft `hia-tsdoc-extraction` artifact.
+ */
 export function extractTsDoc(source, options = {}) {
   const sourcePath = normalizeSourcePath(options.path ?? "input.ts");
   const lines = String(source).replaceAll("\r\n", "\n").replaceAll("\r", "\n").split("\n");
@@ -20,8 +28,7 @@ export function extractTsDoc(source, options = {}) {
   const diagnostics = [];
 
   for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const declaration = parseDeclaration(line);
+    const declaration = parseDeclaration(lines, index);
     if (!declaration) {
       continue;
     }
@@ -106,6 +113,13 @@ export function extractTsDoc(source, options = {}) {
   };
 }
 
+/**
+ * Parses one raw TSDoc/JSDoc-style block comment into summary, tags and parser diagnostics.
+ *
+ * @lang zh-CN 将一个原始块注释解析为摘要、标签与 TSDoc parser 诊断；该函数不读取源码上下文。
+ * @param {string} rawComment Raw block comment text, including delimiters.
+ * @returns {{ summary: string | null, tags: object[], parserDiagnostics: object[] }} Parsed comment metadata.
+ */
 export function parseTSDocComment(rawComment) {
   const text = String(rawComment);
   const parserContext = parser.parseString(text);
@@ -139,12 +153,18 @@ export function parseTSDocComment(rawComment) {
   };
 }
 
-function parseDeclaration(line) {
-  const functionMatch = /^\s*export\s+function\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)/.exec(line);
+function parseDeclaration(lines, index) {
+  const line = lines[index];
+  if (!/^\s*export\b/.test(line)) {
+    return null;
+  }
+  const declarationHeader = collectDeclarationHeader(lines, index);
+  const functionMatch = /^\s*export\s+(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(([\s\S]*?)\)/.exec(declarationHeader);
   if (functionMatch) {
+    const parameters = normalizeSignatureText(functionMatch[2]);
     return {
       name: functionMatch[1],
-      signature: `${functionMatch[1]}(${functionMatch[2].trim()})`,
+      signature: `${functionMatch[1]}(${parameters})`,
       exported: true,
       kind: TSDOC_SYMBOL_KINDS.runtimeFunction,
       classification: TSDOC_CLASSIFICATIONS.runtime,
@@ -186,6 +206,22 @@ function parseDeclaration(line) {
   }
 
   return null;
+}
+
+function collectDeclarationHeader(lines, startIndex) {
+  const parts = [];
+  for (let index = startIndex; index < Math.min(lines.length, startIndex + 40); index += 1) {
+    const text = lines[index].trim();
+    parts.push(text);
+    if (text.includes("{") || text.endsWith(";")) {
+      break;
+    }
+  }
+  return parts.join(" ");
+}
+
+function normalizeSignatureText(value) {
+  return String(value).replace(/\s+/g, " ").replace(/\s*,\s*/g, ", ").trim();
 }
 
 function createSymbol({ declaration, sourcePath, sourceRange }) {

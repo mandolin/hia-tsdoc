@@ -48,6 +48,50 @@ export interface AddInput {
     assert.ok(artifact.symbols.some((symbol) => symbol.id === "interface:AddInput" && symbol.classification === "type-only"));
   });
 
+  it("extracts async exported functions as runtime symbols", () => {
+    const artifact = extractTsDoc(`/**
+ * Converts text asynchronously.
+ * @public
+ */
+export async function textToArt(input: string): Promise<string> {
+  return input;
+}
+`, { path: "fixtures/basic/text-to-art.ts" });
+
+    assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:textToArt" && symbol.classification === "runtime"));
+    assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:textToArt" && symbol.signature === "textToArt(input: string)"));
+  });
+
+  it("extracts multiline exported function declarations", () => {
+    const artifact = extractTsDoc(`/**
+ * Converts text.
+ * @public
+ */
+export async function textToArt(
+  input: string,
+  options: Record<string, unknown>
+): Promise<string> {
+  return input;
+}
+`, { path: "fixtures/basic/text-to-art.ts" });
+
+    assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:textToArt" && symbol.classification === "runtime"));
+    assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:textToArt" && symbol.signature === "textToArt(input: string, options: Record<string, unknown>)"));
+  });
+
+  it("does not treat a blank line before an export as a duplicate declaration", () => {
+    const artifact = extractTsDoc(`export type Message =
+  | { type: 'ready' }
+  | { type: 'done' };
+
+export function isMessage(value: unknown): boolean {
+  return Boolean(value);
+}
+`, { path: "fixtures/basic/message.ts" });
+
+    assert.equal(artifact.symbols.filter((symbol) => symbol.id === "function:isMessage").length, 1);
+  });
+
   it("emits a non-empty signature for zero-argument functions", () => {
     const artifact = extractTsDoc(`/**
  * Lists values.

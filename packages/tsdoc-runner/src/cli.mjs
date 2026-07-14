@@ -13,8 +13,15 @@ const { values, positionals } = parseArgs({
   options: {
     config: { type: "string", short: "c" },
     help: { type: "boolean", short: "h" },
+    lib: { type: "string" },
+    module: { type: "string" },
+    "module-resolution": { type: "string" },
     "no-doc-source-map": { type: "boolean" },
+    "no-skip-lib-check": { type: "boolean" },
     "out-dir": { type: "string", short: "o" },
+    "sources-content-policy": { type: "string" },
+    target: { type: "string" },
+    types: { type: "string" },
     version: { type: "boolean", short: "v" },
     "workspace-root": { type: "string" }
   },
@@ -23,7 +30,7 @@ const { values, positionals } = parseArgs({
 });
 
 if (values.help) {
-  process.stdout.write(`HIA TSDoc ${TSDOC_RUNNER_VERSION}\n\nUsage:\n  hia-tsdoc --config tsdoc.config.json\n  hia-tsdoc [options] <entry.ts...>\n\nOptions:\n  -c, --config <path>\n  -o, --out-dir <path>\n      --workspace-root <path>\n      --no-doc-source-map\n  -v, --version\n`);
+  process.stdout.write(`HIA TSDoc ${TSDOC_RUNNER_VERSION}\n\nUsage:\n  hia-tsdoc --config tsdoc.config.json\n  hia-tsdoc [options] <entry.ts...>\n\nOptions:\n  -c, --config <path>\n  -o, --out-dir <path>\n      --workspace-root <path>\n      --target <name>\n      --module <name>\n      --module-resolution <name>\n      --lib <name[,name...]>\n      --types <name[,name...]>\n      --sources-content-policy <none|reference|embed>\n      --no-doc-source-map\n      --no-skip-lib-check\n  -v, --version\n`);
   process.exit(0);
 }
 
@@ -66,7 +73,21 @@ function createCliRequest(cliValues, inputs) {
     })),
     options: {
       emitDocSourceMap: !cliValues["no-doc-source-map"],
+      lib: parseCommaList(cliValues.lib),
+      module: cliValues.module,
+      moduleResolution: cliValues["module-resolution"],
+      skipLibCheck: !cliValues["no-skip-lib-check"],
+      sourcesContentPolicy: cliValues["sources-content-policy"],
+      target: cliValues.target,
+      types: parseCommaList(cliValues.types),
       writeResultManifest: true
     }
   };
+}
+
+function parseCommaList(value) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return [];
+  }
+  return value.split(",").map((item) => item.trim()).filter(Boolean);
 }

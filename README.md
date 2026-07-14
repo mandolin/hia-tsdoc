@@ -72,6 +72,7 @@ For a normal TypeScript project, install the runner package and create a `tsdoc.
     "sourcesContentPolicy": "none",
     "target": "ES2022",
     "module": "ES2022",
+    "skipLibCheck": true,
     "writeResultManifest": true
   }
 }
@@ -84,5 +85,11 @@ hia-tsdoc --config tsdoc.config.json
 ```
 
 `sourcesContentPolicy` defaults to `none`; embedding source text should remain an explicit opt-in and must be release-gated by the consuming project.
+
+For quick read-only pilots against an existing project, the CLI can receive the same compiler boundary without writing a config file into that project:
+
+```sh
+hia-tsdoc --workspace-root /path/to/project --out-dir /tmp/hia-tsdoc --types node src/index.ts
+```
 
 The current repository gate includes `npm run check:target-consumer`, which packs every local workspace package, installs those tarballs into a temporary consumer project and invokes the packaged `hia-tsdoc` binary. This keeps the target-project path separate from monorepo internals.

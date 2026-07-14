@@ -9,3 +9,9 @@ hia-tsdoc --config tsdoc.config.json
 ```
 
 The package also keeps `tsdoc` as an early compatibility alias, but new project scripts should prefer `hia-tsdoc` to avoid collisions with other TSDoc-related tooling.
+
+For read-only pilots, pass compiler options directly:
+
+```sh
+hia-tsdoc --workspace-root /path/to/project --out-dir /tmp/hia-tsdoc --types node src/index.ts
+```
