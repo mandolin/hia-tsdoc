@@ -23,7 +23,7 @@ const { values, positionals } = parseArgs({
 });
 
 if (values.help) {
-  process.stdout.write(`TSDoc ${TSDOC_RUNNER_VERSION}\n\nUsage:\n  tsdoc --config tsdoc.config.json\n  tsdoc [options] <entry.ts...>\n\nOptions:\n  -c, --config <path>\n  -o, --out-dir <path>\n      --workspace-root <path>\n      --no-doc-source-map\n  -v, --version\n`);
+  process.stdout.write(`HIA TSDoc ${TSDOC_RUNNER_VERSION}\n\nUsage:\n  hia-tsdoc --config tsdoc.config.json\n  hia-tsdoc [options] <entry.ts...>\n\nOptions:\n  -c, --config <path>\n  -o, --out-dir <path>\n      --workspace-root <path>\n      --no-doc-source-map\n  -v, --version\n`);
   process.exit(0);
 }
 

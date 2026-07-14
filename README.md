@@ -46,5 +46,43 @@ npm install
 npm run build:fixtures
 npm run smoke:standalone
 npm run check:fixtures
+npm run check:target-consumer
 npm run release:gate
 ```
+
+## Target Project Usage
+
+For a normal TypeScript project, install the runner package and create a `tsdoc.config.json`:
+
+```json
+{
+  "$schema": "https://mandolin.github.io/HIA-Documentation/schemas/tsdoc-config-0.1.0-draft.schema.json",
+  "schemaVersion": "0.1.0-draft",
+  "workspaceRoot": ".",
+  "outputDirectory": "dist/hia-tsdoc",
+  "inputs": [
+    {
+      "kind": "typescript-entry",
+      "path": "src/index.ts",
+      "artifactBasePath": "api/index"
+    }
+  ],
+  "options": {
+    "emitDocSourceMap": true,
+    "sourcesContentPolicy": "none",
+    "target": "ES2022",
+    "module": "ES2022",
+    "writeResultManifest": true
+  }
+}
+```
+
+Then run:
+
+```sh
+hia-tsdoc --config tsdoc.config.json
+```
+
+`sourcesContentPolicy` defaults to `none`; embedding source text should remain an explicit opt-in and must be release-gated by the consuming project.
+
+The current repository gate includes `npm run check:target-consumer`, which packs every local workspace package, installs those tarballs into a temporary consumer project and invokes the packaged `hia-tsdoc` binary. This keeps the target-project path separate from monorepo internals.

@@ -9,6 +9,7 @@
     ".": "./src/index.mjs"
   },
   "bin": {
+    "hia-tsdoc": "./src/cli.mjs",
     "tsdoc": "./src/cli.mjs"
   },
   "files": [

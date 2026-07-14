@@ -3,6 +3,7 @@ dist/
 !fixtures/**/dist/
 !fixtures/**/dist/**
 coverage/
+temp/
 *.tgz
 npm-debug.log*
 yarn-debug.log*

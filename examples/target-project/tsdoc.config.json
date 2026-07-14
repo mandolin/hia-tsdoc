@@ -1,0 +1,26 @@
+{
+  "$schema": "https://mandolin.github.io/HIA-Documentation/schemas/tsdoc-config-0.1.0-draft.schema.json",
+  "schemaVersion": "0.1.0-draft",
+  "workspaceRoot": ".",
+  "outputDirectory": "dist/hia-tsdoc",
+  "inputs": [
+    {
+      "kind": "typescript-entry",
+      "path": "src/banner.ts",
+      "artifactBasePath": "api/banner"
+    },
+    {
+      "kind": "typescript-entry",
+      "path": "src/palette.ts",
+      "artifactBasePath": "api/palette"
+    }
+  ],
+  "options": {
+    "emitDocSourceMap": true,
+    "sourcesContentPolicy": "none",
+    "target": "ES2022",
+    "module": "ES2022",
+    "writeResultManifest": true
+  }
+}
+

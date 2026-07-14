@@ -53,6 +53,16 @@ for (const packageRoot of packageRoots) {
     console.error("Missing src/cli.mjs in @hia-doc/tsdoc-runner pack dry-run.");
     failed = true;
   }
+  if (packageJson.name === "@hia-doc/tsdoc-runner") {
+    if (packageJson.bin?.["hia-tsdoc"] !== "./src/cli.mjs") {
+      console.error("Missing hia-tsdoc bin alias in @hia-doc/tsdoc-runner.");
+      failed = true;
+    }
+    if (packageJson.bin?.tsdoc !== "./src/cli.mjs") {
+      console.error("Missing tsdoc compatibility bin alias in @hia-doc/tsdoc-runner.");
+      failed = true;
+    }
+  }
 }
 
 if (failed) {
