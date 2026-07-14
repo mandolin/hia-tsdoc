@@ -144,7 +144,7 @@ function parseDeclaration(line) {
   if (functionMatch) {
     return {
       name: functionMatch[1],
-      signature: functionMatch[2],
+      signature: `${functionMatch[1]}(${functionMatch[2].trim()})`,
       exported: true,
       kind: TSDOC_SYMBOL_KINDS.runtimeFunction,
       classification: TSDOC_CLASSIFICATIONS.runtime,

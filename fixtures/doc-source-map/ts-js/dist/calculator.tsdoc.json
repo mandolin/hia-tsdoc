@@ -30,7 +30,7 @@
       "kind": "ts-runtime-function",
       "classification": "runtime",
       "exported": true,
-      "signature": "input: AddInput",
+      "signature": "add(input: AddInput)",
       "source": {
         "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
         "range": {

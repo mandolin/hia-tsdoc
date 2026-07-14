@@ -44,7 +44,21 @@ export interface AddInput {
 `, { path: "fixtures/basic/calculator.ts" });
 
     assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:add" && symbol.classification === "runtime"));
+    assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:add" && symbol.signature === "add(input: AddInput)"));
     assert.ok(artifact.symbols.some((symbol) => symbol.id === "interface:AddInput" && symbol.classification === "type-only"));
+  });
+
+  it("emits a non-empty signature for zero-argument functions", () => {
+    const artifact = extractTsDoc(`/**
+ * Lists values.
+ * @public
+ */
+export function listValues(): string[] {
+  return [];
+}
+`, { path: "fixtures/basic/list-values.ts" });
+
+    assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:listValues" && symbol.signature === "listValues()"));
   });
 
   it("runs the standalone runner and producer adapter from the same request", async () => {

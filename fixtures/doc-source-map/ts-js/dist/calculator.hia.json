@@ -21,7 +21,7 @@
       "id": "function:add",
       "name": "add",
       "kind": "function",
-      "signature": "input: AddInput",
+      "signature": "add(input: AddInput)",
       "summary": "Adds two numeric values.",
       "source": {
         "model": "hia-source",
