@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/tsdoc-runner",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Standalone TypeScript/TSDoc project runner and CLI.",
   "license": "MIT",
   "type": "module",
@@ -9,8 +8,8 @@
     ".": "./src/index.mjs"
   },
   "bin": {
-    "hia-tsdoc": "./src/cli.mjs",
-    "tsdoc": "./src/cli.mjs"
+    "hia-tsdoc": "src/cli.mjs",
+    "tsdoc": "src/cli.mjs"
   },
   "files": [
     "src",
@@ -21,11 +20,24 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@hia-doc/ts-doc-adapter": "0.0.0",
-    "@hia-doc/ts-doc-extractor": "0.0.0",
-    "@hia-doc/ts-jsdoc-bridge": "0.0.0",
-    "@hia-doc/ts-to-js-doc-source-map": "0.0.0",
-    "@hia-doc/tsdoc-spec": "0.0.0",
+    "@hia-doc/ts-doc-adapter": "0.1.0",
+    "@hia-doc/ts-doc-extractor": "0.1.0",
+    "@hia-doc/ts-jsdoc-bridge": "0.1.0",
+    "@hia-doc/ts-to-js-doc-source-map": "0.1.0",
+    "@hia-doc/tsdoc-spec": "0.1.0",
     "typescript": "7.0.2"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/hia-tsdoc.git",
+    "directory": "packages/tsdoc-runner"
+  },
+  "bugs": {
+    "url": "https://github.com/mandolin/hia-tsdoc/issues"
+  },
+  "homepage": "https://github.com/mandolin/hia-tsdoc#readme"
 }

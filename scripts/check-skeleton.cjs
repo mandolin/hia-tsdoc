@@ -60,7 +60,7 @@ for (const relativePath of requiredPaths) {
 
 const rootPackage = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 if (rootPackage.private !== true) {
-  console.error("Root package must stay private until TSDoc package names are finalized.");
+  console.error("Root workspace package must stay private; publish packages live under packages/*.");
   failed = true;
 }
 

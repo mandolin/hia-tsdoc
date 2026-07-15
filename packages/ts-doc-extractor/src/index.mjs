@@ -74,7 +74,7 @@ export function extractTsDoc(source, options = {}) {
     contractVersion: TSDOC_EXTRACTION_CONTRACT_VERSION,
     producer: {
       name: "@hia-doc/ts-doc-extractor",
-      version: "0.0.0"
+      version: "0.1.0"
     },
     profile: {
       name: "tsdoc",

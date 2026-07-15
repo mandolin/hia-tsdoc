@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/ts-doc-extractor",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "TypeScript source to TSDoc extraction artifact.",
   "license": "MIT",
   "type": "module",
@@ -13,7 +12,20 @@
     "README.md"
   ],
   "dependencies": {
-    "@hia-doc/tsdoc-spec": "0.0.0",
+    "@hia-doc/tsdoc-spec": "0.1.0",
     "@microsoft/tsdoc": "0.16.0"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/hia-tsdoc.git",
+    "directory": "packages/ts-doc-extractor"
+  },
+  "bugs": {
+    "url": "https://github.com/mandolin/hia-tsdoc/issues"
+  },
+  "homepage": "https://github.com/mandolin/hia-tsdoc#readme"
 }

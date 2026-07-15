@@ -4,7 +4,7 @@
   "id": "docmap:ts-js:fixtures-doc-source-map-ts-js-src-calculator-ts",
   "producer": {
     "name": "@hia-doc/ts-to-js-doc-source-map",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "profile": "ts-jsdoc-bridge"
   },
   "artifacts": [

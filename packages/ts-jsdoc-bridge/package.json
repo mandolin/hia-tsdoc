@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/ts-jsdoc-bridge",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Bridge between TSDoc and JSDoc artifacts.",
   "license": "MIT",
   "type": "module",
@@ -13,6 +12,19 @@
     "README.md"
   ],
   "dependencies": {
-    "@hia-doc/tsdoc-spec": "0.0.0"
-  }
+    "@hia-doc/tsdoc-spec": "0.1.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/hia-tsdoc.git",
+    "directory": "packages/ts-jsdoc-bridge"
+  },
+  "bugs": {
+    "url": "https://github.com/mandolin/hia-tsdoc/issues"
+  },
+  "homepage": "https://github.com/mandolin/hia-tsdoc#readme"
 }

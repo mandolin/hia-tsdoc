@@ -1,6 +1,6 @@
 export const TSDOC_EXTRACTION_CONTRACT = "hia-tsdoc-extraction";
 export const TSDOC_EXTRACTION_CONTRACT_VERSION = "0.1.0-draft";
-export const TSDOC_EXTRACTION_SCHEMA_ID = "https://hia-doc.local/schema/hia-tsdoc-extraction-0.1.0-draft.json";
+export const TSDOC_EXTRACTION_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-tsdoc-extraction-0.1.0-draft.json";
 export const TSDOC_PROFILE_VERSION = "0.1.0-draft";
 
 export const TSDOC_SYMBOL_KINDS = Object.freeze({

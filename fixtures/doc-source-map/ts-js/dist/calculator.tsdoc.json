@@ -3,7 +3,7 @@
   "contractVersion": "0.1.0-draft",
   "producer": {
     "name": "@hia-doc/ts-doc-extractor",
-    "version": "0.0.0"
+    "version": "0.1.0"
   },
   "profile": {
     "name": "tsdoc",

@@ -41,12 +41,10 @@ for (const packageRoot of packageRoots) {
       failed = true;
     }
   }
-  if (packageJson.name === "@hia-doc/tsdoc-runner" || packageJson.name === "@hia-doc/tsdoc-producer") {
-    for (const requiredPath of ["LICENSE", "README.md", "package.json", "src/index.mjs"]) {
-      if (!packedPaths.has(requiredPath)) {
-        console.error(`Missing ${requiredPath} in ${packageJson.name} pack dry-run.`);
-        failed = true;
-      }
+  for (const requiredPath of ["LICENSE", "README.md", "package.json", "src/index.mjs"]) {
+    if (!packedPaths.has(requiredPath)) {
+      console.error(`Missing ${requiredPath} in ${packageJson.name} pack dry-run.`);
+      failed = true;
     }
   }
   if (packageJson.name === "@hia-doc/tsdoc-runner" && !packedPaths.has("src/cli.mjs")) {
@@ -54,11 +52,11 @@ for (const packageRoot of packageRoots) {
     failed = true;
   }
   if (packageJson.name === "@hia-doc/tsdoc-runner") {
-    if (packageJson.bin?.["hia-tsdoc"] !== "./src/cli.mjs") {
+    if (packageJson.bin?.["hia-tsdoc"] !== "src/cli.mjs") {
       console.error("Missing hia-tsdoc bin alias in @hia-doc/tsdoc-runner.");
       failed = true;
     }
-    if (packageJson.bin?.tsdoc !== "./src/cli.mjs") {
+    if (packageJson.bin?.tsdoc !== "src/cli.mjs") {
       console.error("Missing tsdoc compatibility bin alias in @hia-doc/tsdoc-runner.");
       failed = true;
     }

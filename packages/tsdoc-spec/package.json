@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/tsdoc-spec",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "TypeScript/TSDoc documentation annotation, tag registry and rule drafts.",
   "license": "MIT",
   "type": "module",
@@ -11,5 +10,18 @@
   "files": [
     "src",
     "README.md"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/hia-tsdoc.git",
+    "directory": "packages/tsdoc-spec"
+  },
+  "bugs": {
+    "url": "https://github.com/mandolin/hia-tsdoc/issues"
+  },
+  "homepage": "https://github.com/mandolin/hia-tsdoc#readme"
 }
