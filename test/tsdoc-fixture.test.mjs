@@ -24,6 +24,19 @@ describe("TSDoc extractor", () => {
     assert.ok(comment.tags.some((tag) => tag.tag === "returns"));
   });
 
+  it("recognizes HIA target-project tags and standard throws blocks", () => {
+    const comment = parseTSDocComment(`/**
+ * Renders a value.
+ *
+ * @performance Uses a cache-backed fast path for repeated glyph lookups.
+ * @throws Throws when the input cannot be normalized.
+ */`);
+
+    assert.deepEqual(comment.parserDiagnostics, []);
+    assert.ok(comment.tags.some((tag) => tag.tag === "performance" && tag.known));
+    assert.ok(comment.tags.some((tag) => tag.tag === "throws" && tag.known));
+  });
+
   it("keeps runtime and type-only symbols separate", () => {
     const artifact = extractTsDoc(`/**
  * Adds values.

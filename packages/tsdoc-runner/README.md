@@ -13,5 +13,7 @@ The package also keeps `tsdoc` as an early compatibility alias, but new project 
 For read-only pilots, pass compiler options directly:
 
 ```sh
-hia-tsdoc --workspace-root /path/to/project --out-dir /tmp/hia-tsdoc --types node src/index.ts
+hia-tsdoc --workspace-root /path/to/project --out-dir /tmp/hia-tsdoc --module-resolution bundler --types node src/index.ts
 ```
+
+For project scripts, prefer a documentation-only `tsdoc.config.json` and set `options.moduleResolution` to `bundler` when the target project relies on bundler-style TypeScript resolution.

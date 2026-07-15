@@ -23,7 +23,7 @@ export function createTsJsDocSourceMap(options) {
     id: options.id ?? "docmap:ts-js:document",
     producer: {
       name: "@hia-doc/ts-to-js-doc-source-map",
-      version: "0.1.0",
+      version: "0.1.1",
       profile: "ts-jsdoc-bridge"
     },
     artifacts: [

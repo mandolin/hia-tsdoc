@@ -72,6 +72,7 @@ For a normal TypeScript project, install the runner package and create a `tsdoc.
     "sourcesContentPolicy": "none",
     "target": "ES2022",
     "module": "ES2022",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
     "writeResultManifest": true
   }
@@ -85,6 +86,22 @@ hia-tsdoc --config tsdoc.config.json
 ```
 
 `sourcesContentPolicy` defaults to `none`; embedding source text should remain an explicit opt-in and must be release-gated by the consuming project.
+
+For bundler-oriented TypeScript projects, prefer a documentation-specific `tsdoc.config.json` instead of changing the production `tsconfig.json`. Set `options.moduleResolution` to `bundler` when the source entry depends on package exports, extensionless ESM imports or other bundler-style resolution behavior.
+
+HIA TSDoc accepts `@performance` as a project-level block tag for complexity, caching, memory or rendering-performance notes. Use standard TSDoc `@throws` text without JSDoc-style type braces:
+
+```ts
+/**
+ * Renders a value.
+ *
+ * @performance Uses a cache-backed fast path for repeated glyph lookups.
+ * @throws Throws when the input cannot be normalized.
+ */
+export function renderValue(input: unknown): string;
+```
+
+Avoid old JSDoc-style `@throws {Error}` in TSDoc comments; the official TSDoc parser treats `{Error}` as malformed inline-tag syntax.
 
 For quick read-only pilots against an existing project, the CLI can receive the same compiler boundary without writing a config file into that project:
 

@@ -20,11 +20,13 @@ export const TSDOC_TAGS = Object.freeze([
   "remarks",
   "param",
   "returns",
+  "throws",
   "example",
   "deprecated",
   "beta",
   "alpha",
-  "internal"
+  "internal",
+  "performance"
 ]);
 
 export const TSDOC_EXTRACTION_JSON_SCHEMA = Object.freeze({

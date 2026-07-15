@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/ts-to-js-doc-source-map",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript to JavaScript documentation source-map linkage.",
   "license": "MIT",
   "type": "module",
@@ -12,7 +12,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@hia-doc/tsdoc-spec": "0.1.0"
+    "@hia-doc/tsdoc-spec": "0.1.1"
   },
   "publishConfig": {
     "access": "public",

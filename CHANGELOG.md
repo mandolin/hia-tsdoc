@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Accept `@performance` as an HIA TSDoc project-level block tag without parser warnings.
+- Add standard `@throws` to the known tag registry and document migration away from JSDoc-style `@throws {Type}` syntax.
+- Document docs-only `moduleResolution: "bundler"` configuration for target projects that use package exports or bundler-style resolution.
+
 ## 0.1.0
 
 - Initialize HIA TSDoc bootstrap workspace.

@@ -1,4 +1,9 @@
-import { TSDocParser } from "@microsoft/tsdoc";
+import {
+  TSDocConfiguration,
+  TSDocParser,
+  TSDocTagDefinition,
+  TSDocTagSyntaxKind
+} from "@microsoft/tsdoc";
 
 import {
   TSDOC_CLASSIFICATIONS,
@@ -10,7 +15,15 @@ import {
   normalizeTSDocTag
 } from "@hia-doc/tsdoc-spec";
 
-const parser = new TSDocParser();
+const tsdocConfiguration = new TSDocConfiguration();
+const performanceTagDefinition = new TSDocTagDefinition({
+  tagName: "@performance",
+  syntaxKind: TSDocTagSyntaxKind.BlockTag,
+  allowMultiple: true
+});
+tsdocConfiguration.addTagDefinition(performanceTagDefinition);
+
+const parser = new TSDocParser(tsdocConfiguration);
 
 /**
  * Extracts a draft TSDoc documentation artifact from one TypeScript source file.
@@ -74,7 +87,7 @@ export function extractTsDoc(source, options = {}) {
     contractVersion: TSDOC_EXTRACTION_CONTRACT_VERSION,
     producer: {
       name: "@hia-doc/ts-doc-extractor",
-      version: "0.1.0"
+      version: "0.1.1"
     },
     profile: {
       name: "tsdoc",
