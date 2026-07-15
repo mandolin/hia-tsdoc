@@ -15,32 +15,32 @@ const approvedDependencies = {
     purpose: "Compile TypeScript fixtures and inspect TypeScript AST/source ranges."
   },
   "@hia-doc/tsdoc-spec": {
-    version: "0.1.1",
+    version: "0.1.2",
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/ts-doc-adapter": {
-    version: "0.1.1",
+    version: "0.1.2",
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/ts-doc-extractor": {
-    version: "0.1.1",
+    version: "0.1.2",
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/ts-jsdoc-bridge": {
-    version: "0.1.1",
+    version: "0.1.2",
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/ts-to-js-doc-source-map": {
-    version: "0.1.1",
+    version: "0.1.2",
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/tsdoc-runner": {
-    version: "0.1.1",
+    version: "0.1.2",
     license: "MIT",
     purpose: "Internal workspace package."
   }

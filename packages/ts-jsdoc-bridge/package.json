@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/ts-jsdoc-bridge",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Bridge between TSDoc and JSDoc artifacts.",
   "license": "MIT",
   "type": "module",
@@ -12,7 +12,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@hia-doc/tsdoc-spec": "0.1.1"
+    "@hia-doc/tsdoc-spec": "0.1.2"
   },
   "publishConfig": {
     "access": "public",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- Fix the conservative extractor so exported functions with object-literal default parameters, such as `options = {}`, are not omitted from TSDoc output.
+
 ## 0.1.1
 
 - Accept `@performance` as an HIA TSDoc project-level block tag without parser warnings.

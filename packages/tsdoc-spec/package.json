@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/tsdoc-spec",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "TypeScript/TSDoc documentation annotation, tag registry and rule drafts.",
   "license": "MIT",
   "type": "module",

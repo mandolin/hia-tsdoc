@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/hia-tsdoc-workspace",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Workspace for HIA TypeScript/TSDoc documentation packages.",
   "license": "MIT",

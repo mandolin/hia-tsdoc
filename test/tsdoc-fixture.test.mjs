@@ -92,6 +92,23 @@ export async function textToArt(
     assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:textToArt" && symbol.signature === "textToArt(input: string, options: Record<string, unknown>)"));
   });
 
+  it("extracts functions whose optional options use an object default", () => {
+    const artifact = extractTsDoc(`/**
+ * Converts a browser image.
+ * @public
+ */
+export async function imageToArt(
+  input: unknown,
+  options: BrowserArtOptions = {}
+): Promise<string> {
+  return String(input);
+}
+`, { path: "fixtures/basic/browser-image-to-art.ts" });
+
+    assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:imageToArt" && symbol.classification === "runtime"));
+    assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:imageToArt" && symbol.signature === "imageToArt(input: unknown, options: BrowserArtOptions = {})"));
+  });
+
   it("does not treat a blank line before an export as a duplicate declaration", () => {
     const artifact = extractTsDoc(`export type Message =
   | { type: 'ready' }

@@ -87,7 +87,7 @@ export function extractTsDoc(source, options = {}) {
     contractVersion: TSDOC_EXTRACTION_CONTRACT_VERSION,
     producer: {
       name: "@hia-doc/ts-doc-extractor",
-      version: "0.1.1"
+      version: "0.1.2"
     },
     profile: {
       name: "tsdoc",
@@ -223,10 +223,49 @@ function parseDeclaration(lines, index) {
 
 function collectDeclarationHeader(lines, startIndex) {
   const parts = [];
+  // 中文：以括号/引号状态收集函数头，避免默认对象参数中的 `{}` 被误判为函数体开始。
+  // English: Track parentheses and quotes so object-literal defaults are not mistaken for function bodies.
+  let parenthesisDepth = 0;
+  let foundParameterList = false;
+  let quote = null;
+  let escaped = false;
+
   for (let index = startIndex; index < Math.min(lines.length, startIndex + 40); index += 1) {
     const text = lines[index].trim();
     parts.push(text);
-    if (text.includes("{") || text.endsWith(";")) {
+
+    for (const character of text) {
+      if (quote) {
+        if (escaped) {
+          escaped = false;
+        } else if (character === "\\") {
+          escaped = true;
+        } else if (character === quote) {
+          quote = null;
+        }
+        continue;
+      }
+
+      if (character === "'" || character === '"' || character === "`") {
+        quote = character;
+        continue;
+      }
+
+      if (character === "(") {
+        foundParameterList = true;
+        parenthesisDepth += 1;
+        continue;
+      }
+
+      if (character === ")" && foundParameterList) {
+        parenthesisDepth -= 1;
+        if (parenthesisDepth === 0) {
+          return parts.join(" ");
+        }
+      }
+    }
+
+    if (text.endsWith(";")) {
       break;
     }
   }
