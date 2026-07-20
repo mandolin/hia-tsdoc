@@ -9,13 +9,15 @@ export function tsDocToHiaDocument(tsArtifact, options = {}) {
   const runtimeSymbols = tsArtifact.symbols.filter((symbol) => symbol.classification === TSDOC_CLASSIFICATIONS.runtime);
   const typeOnlySymbols = tsArtifact.symbols.filter((symbol) => symbol.classification === TSDOC_CLASSIFICATIONS.typeOnly);
   const title = options.title ?? "TSDoc Document";
+  const defaultLocale = options.defaultLocale ?? tsArtifact.defaultLocale ?? "en";
+  const symbols = runtimeSymbols.map((symbol) => mapRuntimeSymbol(symbol));
 
   return {
     schemaVersion: HIA_CORE_SCHEMA_VERSION,
     id: options.id ?? "tsdoc:document",
     title,
-    defaultLocale: options.defaultLocale ?? "en",
-    locales: options.locales ?? ["en"],
+    defaultLocale,
+    locales: collectDocumentLocales(options.locales, tsArtifact.locales, symbols, defaultLocale),
     nodes: [
       {
         id: "root",
@@ -24,7 +26,7 @@ export function tsDocToHiaDocument(tsArtifact, options = {}) {
         symbolIds: runtimeSymbols.map((symbol) => symbol.id)
       }
     ],
-    symbols: runtimeSymbols.map((symbol) => mapRuntimeSymbol(symbol)),
+    symbols,
     diagnostics: tsArtifact.diagnostics ?? [],
     metadata: {
       sourceContract: tsArtifact.contract,
@@ -61,12 +63,12 @@ export function assertTsDocArtifact(artifact) {
 }
 
 function mapRuntimeSymbol(symbol) {
-  return {
+  const mapped = {
     id: symbol.id,
     name: symbol.name,
     kind: symbol.kind === "ts-runtime-class" ? "class" : "function",
     signature: symbol.signature,
-    summary: symbol.comment?.summary ?? undefined,
+    summary: symbol.comment?.i18n?.fields?.description?.defaultText ?? symbol.comment?.summary ?? undefined,
     source: {
       model: HIA_SOURCE_MODEL,
       modelVersion: HIA_SOURCE_MODEL_VERSION,
@@ -96,4 +98,25 @@ function mapRuntimeSymbol(symbol) {
       }
     }
   };
+  if (symbol.comment?.i18n) {
+    mapped.i18n = symbol.comment.i18n;
+  }
+  return mapped;
+}
+
+function collectDocumentLocales(optionLocales, artifactLocales, symbols, defaultLocale) {
+  const locales = [
+    defaultLocale,
+    ...(Array.isArray(optionLocales) ? optionLocales : []),
+    ...(Array.isArray(artifactLocales) ? artifactLocales : [])
+  ];
+  for (const symbol of symbols) {
+    locales.push(...(Array.isArray(symbol.i18n?.locales) ? symbol.i18n.locales : []));
+  }
+  return [...new Set(locales.map((locale) => normalizeLocale(locale)).filter(Boolean))];
+}
+
+function normalizeLocale(value) {
+  const locale = String(value ?? "").trim().replace(/_/g, "-");
+  return /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(locale) ? locale : "";
 }

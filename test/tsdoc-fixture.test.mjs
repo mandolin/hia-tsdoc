@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { extractTsDoc, parseTSDocComment } from "../packages/ts-doc-extractor/src/index.mjs";
+import { tsDocToHiaDocument } from "../packages/ts-doc-adapter/src/index.mjs";
 import { runTsDoc } from "../packages/tsdoc-runner/src/index.mjs";
 import { tsdocProducer } from "../packages/tsdoc-producer/src/index.mjs";
 
@@ -35,6 +36,19 @@ describe("TSDoc extractor", () => {
     assert.deepEqual(comment.parserDiagnostics, []);
     assert.ok(comment.tags.some((tag) => tag.tag === "performance" && tag.known));
     assert.ok(comment.tags.some((tag) => tag.tag === "throws" && tag.known));
+  });
+
+  it("maps @lang and inline <lang> to field-level i18n", () => {
+    const comment = parseTSDocComment(`/**
+ * Greets a <lang key="greet.target"><zh-CN>用户</zh-CN><en>user</en></lang>.
+ *
+ * @lang zh-CN 问候一个用户。
+ * @lang en Greets a user.
+ */`);
+
+    assert.deepEqual(comment.parserDiagnostics, []);
+    assert.equal(comment.i18n.fields.description.localizedText["zh-CN"], "问候一个用户。");
+    assert.equal(comment.i18n.fields.description.segments[0].localized["zh-CN"], "用户");
   });
 
   it("keeps runtime and type-only symbols separate", () => {
@@ -133,6 +147,23 @@ export function listValues(): string[] {
 `, { path: "fixtures/basic/list-values.ts" });
 
     assert.ok(artifact.symbols.some((symbol) => symbol.id === "function:listValues" && symbol.signature === "listValues()"));
+  });
+
+  it("adapts TSDoc locale fields into HIA symbols", () => {
+    const artifact = extractTsDoc(`/**
+ * Greets a <lang><zh-CN>用户</zh-CN><en>user</en></lang>.
+ * @lang zh-CN 问候一个用户。
+ */
+export function greetUser(name: string): string {
+  return name;
+}
+`, { path: "fixtures/basic/greet.ts" });
+    const document = tsDocToHiaDocument(artifact, { title: "Greeting" });
+    const symbol = document.symbols.find((item) => item.id === "function:greetUser");
+
+    assert.ok(document.locales.includes("zh-CN"));
+    assert.equal(symbol.i18n.fields.description.localizedText["zh-CN"], "问候一个用户。");
+    assert.equal(symbol.i18n.fields.description.localizedText.en, "Greets a user.");
   });
 
   it("runs the standalone runner and producer adapter from the same request", async () => {

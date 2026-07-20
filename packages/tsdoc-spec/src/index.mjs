@@ -26,7 +26,8 @@ export const TSDOC_TAGS = Object.freeze([
   "beta",
   "alpha",
   "internal",
-  "performance"
+  "performance",
+  "lang"
 ]);
 
 export const TSDOC_EXTRACTION_JSON_SCHEMA = Object.freeze({

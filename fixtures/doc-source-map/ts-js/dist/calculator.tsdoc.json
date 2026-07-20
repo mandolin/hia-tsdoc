@@ -9,6 +9,10 @@
     "name": "tsdoc",
     "version": "0.1.0-draft"
   },
+  "defaultLocale": "en",
+  "locales": [
+    "en"
+  ],
   "source": {
     "kind": "typescript",
     "path": "fixtures/doc-source-map/ts-js/src/calculator.ts",
