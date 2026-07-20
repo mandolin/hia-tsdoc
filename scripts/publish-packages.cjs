@@ -17,6 +17,11 @@ for (const item of releasePackages) {
     process.exit(1);
   }
 
+  if (isPublished(item.name, releaseVersion)) {
+    console.log(`Skipping ${item.name}@${releaseVersion}; already published in ${registry}.`);
+    continue;
+  }
+
   console.log(`Publishing ${item.name}@${releaseVersion} to ${registry}`);
   const publishArgs = ["publish", "--access", "public", `--registry=${registry}`];
   if (options.otp) {
@@ -46,6 +51,36 @@ function runNpm(args, options) {
   return spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", args, {
     ...options,
     stdio: "inherit"
+  });
+}
+
+function isPublished(packageName, version) {
+  const result = runNpmQuiet(["view", `${packageName}@${version}`, "version", `--registry=${registry}`], { cwd: root });
+  if (result.status === 0) {
+    return true;
+  }
+
+  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  if (/\bE404\b|No match found|is not in this registry|404 Not Found/i.test(output)) {
+    return false;
+  }
+
+  process.stdout.write(result.stdout ?? "");
+  process.stderr.write(result.stderr ?? "");
+  throw new Error(`Unable to confirm ${packageName}@${version} registry status.`);
+}
+
+function runNpmQuiet(args, options) {
+  const npmCli = process.env.npm_execpath;
+  if (npmCli) {
+    return spawnSync(process.execPath, [npmCli, ...args], {
+      ...options,
+      encoding: "utf8"
+    });
+  }
+  return spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", args, {
+    ...options,
+    encoding: "utf8"
   });
 }
 
