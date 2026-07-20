@@ -1,0 +1,43 @@
+name: npm Trusted Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_publish:
+        description: "Type: publish @hia-doc tsdoc packages"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-trusted-publish-tsdoc
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish TSDoc packages
+    if: inputs.confirm_publish == 'publish @hia-doc tsdoc packages'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org/
+          package-manager-cache: false
+
+      - name: Install npm trusted publishing baseline
+        run: npm install -g npm@^11.15.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish packages
+        run: npm run release:publish
