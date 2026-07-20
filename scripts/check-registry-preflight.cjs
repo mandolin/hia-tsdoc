@@ -6,7 +6,7 @@ const { loadReleasePackages } = require("./release-packages.cjs");
 const root = path.resolve(__dirname, "..");
 const releasePackages = loadReleasePackages();
 const releaseVersion = releasePackages[0]?.version;
-const registry = process.env.npm_config_registry || process.env.NPM_CONFIG_REGISTRY || "https://registry.npmjs.org/";
+const registry = process.env.HIA_NPM_REGISTRY || "https://registry.npmjs.org/";
 
 let failed = false;
 

@@ -6,7 +6,8 @@ const { loadReleasePackages } = require("./release-packages.cjs");
 const root = path.resolve(__dirname, "..");
 const releasePackages = loadReleasePackages();
 const releaseVersion = releasePackages[0]?.version;
-const registry = process.env.npm_config_registry || process.env.NPM_CONFIG_REGISTRY || "https://registry.npmjs.org/";
+const options = parseArgs(process.argv.slice(2));
+const registry = options.registry;
 
 // 中文：按内部依赖顺序发布，确保后续包安装时能解析同版本 workspace 依赖。
 // English: Publishes in internal dependency order so later packages can resolve same-version workspace dependencies.
@@ -17,7 +18,11 @@ for (const item of releasePackages) {
   }
 
   console.log(`Publishing ${item.name}@${releaseVersion} to ${registry}`);
-  const result = runNpm(["publish", "--access", "public", `--registry=${registry}`], { cwd: item.root });
+  const publishArgs = ["publish", "--access", "public", `--registry=${registry}`];
+  if (options.otp) {
+    publishArgs.push(`--otp=${options.otp}`);
+  }
+  const result = runNpm(publishArgs, { cwd: item.root });
   if (result.error) {
     console.error(result.error.message);
     process.exit(1);
@@ -42,4 +47,23 @@ function runNpm(args, options) {
     ...options,
     stdio: "inherit"
   });
+}
+
+function parseArgs(args) {
+  const parsed = {
+    otp: process.env.HIA_NPM_OTP || "",
+    registry: process.env.HIA_NPM_REGISTRY || "https://registry.npmjs.org/"
+  };
+
+  for (const arg of args) {
+    if (arg.startsWith("--otp=")) {
+      parsed.otp = arg.slice("--otp=".length);
+    } else if (arg.startsWith("--registry=")) {
+      parsed.registry = arg.slice("--registry=".length);
+    } else {
+      throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+
+  return parsed;
 }
