@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/tsdoc-runner",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Standalone TypeScript/TSDoc project runner and CLI.",
   "license": "MIT",
   "type": "module",
@@ -20,11 +20,11 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@hia-doc/ts-doc-adapter": "0.1.2",
-    "@hia-doc/ts-doc-extractor": "0.1.2",
-    "@hia-doc/ts-jsdoc-bridge": "0.1.2",
-    "@hia-doc/ts-to-js-doc-source-map": "0.1.2",
-    "@hia-doc/tsdoc-spec": "0.1.2",
+    "@hia-doc/ts-doc-adapter": "0.1.3",
+    "@hia-doc/ts-doc-extractor": "0.1.3",
+    "@hia-doc/ts-jsdoc-bridge": "0.1.3",
+    "@hia-doc/ts-to-js-doc-source-map": "0.1.3",
+    "@hia-doc/tsdoc-spec": "0.1.3",
     "typescript": "7.0.2"
   },
   "publishConfig": {

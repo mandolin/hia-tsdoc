@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/tsdoc-producer",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Documentation producer adapter for TSDoc.",
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@hia-doc/tsdoc-runner": "0.1.2"
+    "@hia-doc/tsdoc-runner": "0.1.3"
   },
   "publishConfig": {
     "access": "public",

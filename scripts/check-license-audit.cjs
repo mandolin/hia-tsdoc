@@ -2,6 +2,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
+const rootPackage = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+const workspaceReleaseVersion = rootPackage.version;
+const internalWorkspaceDependencies = new Set([
+  "@hia-doc/tsdoc-spec",
+  "@hia-doc/ts-doc-adapter",
+  "@hia-doc/ts-doc-extractor",
+  "@hia-doc/ts-jsdoc-bridge",
+  "@hia-doc/ts-to-js-doc-source-map",
+  "@hia-doc/tsdoc-runner"
+]);
 
 const approvedDependencies = {
   "@microsoft/tsdoc": {
@@ -15,32 +25,32 @@ const approvedDependencies = {
     purpose: "Compile TypeScript fixtures and inspect TypeScript AST/source ranges."
   },
   "@hia-doc/tsdoc-spec": {
-    version: "0.1.2",
+    version: workspaceReleaseVersion,
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/ts-doc-adapter": {
-    version: "0.1.2",
+    version: workspaceReleaseVersion,
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/ts-doc-extractor": {
-    version: "0.1.2",
+    version: workspaceReleaseVersion,
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/ts-jsdoc-bridge": {
-    version: "0.1.2",
+    version: workspaceReleaseVersion,
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/ts-to-js-doc-source-map": {
-    version: "0.1.2",
+    version: workspaceReleaseVersion,
     license: "MIT",
     purpose: "Internal workspace package."
   },
   "@hia-doc/tsdoc-runner": {
-    version: "0.1.2",
+    version: workspaceReleaseVersion,
     license: "MIT",
     purpose: "Internal workspace package."
   }
@@ -58,7 +68,10 @@ for (const packageJsonPath of listPackageJsonFiles(root)) {
       continue;
     }
     if (version !== approved.version) {
-      console.error(`Dependency ${name} in ${path.relative(root, packageJsonPath)} must stay pinned to ${approved.version}; found ${version}.`);
+      const expectation = internalWorkspaceDependencies.has(name)
+        ? `follow workspace release version ${approved.version}`
+        : `stay pinned to ${approved.version}`;
+      console.error(`Dependency ${name} in ${path.relative(root, packageJsonPath)} must ${expectation}; found ${version}.`);
       failed = true;
     }
   }

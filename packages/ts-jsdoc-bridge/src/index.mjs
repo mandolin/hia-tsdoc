@@ -10,7 +10,7 @@ export function tsDocToJsDocBridgeArtifact(tsArtifact, options = {}) {
     contractVersion: "0.1.0-draft",
     producer: {
       name: "@hia-doc/ts-jsdoc-bridge",
-      version: "0.1.2"
+      version: "0.1.3"
     },
     source: tsArtifact.source,
     artifact: {

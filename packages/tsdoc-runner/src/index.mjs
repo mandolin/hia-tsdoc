@@ -21,7 +21,7 @@ export {
 } from "./schema.mjs";
 import { TSDOC_CONFIG_SCHEMA_ID, TSDOC_CONFIG_SCHEMA_VERSION } from "./schema.mjs";
 
-export const TSDOC_RUNNER_VERSION = "0.1.2";
+export const TSDOC_RUNNER_VERSION = "0.1.3";
 export const TSDOC_INPUT_KINDS = Object.freeze(["typescript-entry"]);
 export const TSDOC_OUTPUT_KINDS = Object.freeze([
   "generated-js",

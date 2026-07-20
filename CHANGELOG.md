@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+- Add canonical `@lang` block support and inline `<lang>` / `<l>` locale segments for TypeScript/TSDoc descriptions.
+- Emit `defaultLocale`, `locales` and field-level `i18n` data in TSDoc extraction and HIA adapter artifacts.
+- Keep source content private by default while making the new language-marker metadata available to standalone consumers such as UnicodeArtJs.
+
 ## 0.1.2
 
 - Fix the conservative extractor so exported functions with object-literal default parameters, such as `options = {}`, are not omitted from TSDoc output.
