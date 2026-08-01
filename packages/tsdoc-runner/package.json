@@ -9,6 +9,7 @@
   },
   "bin": {
     "hia-tsdoc": "src/cli.mjs",
+    "hia-tsdoc-handoff": "src/handoff-cli.mjs",
     "tsdoc": "src/cli.mjs"
   },
   "files": [

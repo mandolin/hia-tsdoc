@@ -11,6 +11,8 @@ const tempRoot = path.join(root, "temp", "target-consumer-smoke");
 const tarballDirectory = path.join(tempRoot, "tarballs");
 const consumerDirectory = path.join(tempRoot, "consumer");
 const exampleDirectory = path.join(root, "examples", "target-project");
+/** Synthetic handoff fixture verifies the packed optional CLI without consulting an external target. / synthetic handoff fixture 在不咨询外部 target 的情况下验证已打包的可选 CLI。 */
+const handoffFixturePath = path.join(root, "fixtures", "unicode-compatible-handoff", "accepted.handoff.json");
 const packageRoots = fs.readdirSync(path.join(root, "packages"), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => path.join(root, "packages", entry.name))
@@ -40,6 +42,15 @@ function main() {
   const tarballs = packageRoots.map(packWorkspacePackage);
   runNpm(["install", "--ignore-scripts", "--no-audit", "--no-fund", ...tarballs], consumerDirectory);
   runBinary(resolveConsumerBin("hia-tsdoc"), ["--config", "tsdoc.config.json"], consumerDirectory);
+  /** Handoff evidence stays synthetic metadata and is copied only into the temporary HIA-owned consumer. / handoff evidence 保持 synthetic metadata，只复制到临时 HIA-owned consumer。 */
+  const consumerHandoffEvidencePath = path.join(consumerDirectory, "handoff-evidence.json");
+  fs.copyFileSync(handoffFixturePath, consumerHandoffEvidencePath);
+  runBinary(resolveConsumerBin("hia-tsdoc-handoff"), ["--evidence", "handoff-evidence.json", "--out", "handoff-report.json"], consumerDirectory);
+  /** Packed report proves the tarball consumer can use the additive command without a monorepo link. / packed report 证明 tarball consumer 可使用 additive command，而不需 monorepo link。 */
+  const handoffReport = readJson(path.join(consumerDirectory, "handoff-report.json"));
+  if (handoffReport.contract !== "unicode-compatible-tsdoc-handoff" || handoffReport.status !== "accepted") {
+    fail("Invalid packed Unicode-compatible TSDoc handoff report.");
+  }
 
   const outputDirectory = path.join(consumerDirectory, "dist", "hia-tsdoc");
   const manifestPath = path.join(outputDirectory, "tsdoc.producer-result.json");

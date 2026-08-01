@@ -19,6 +19,21 @@ export {
   TSDOC_CONFIG_SCHEMA_ID,
   TSDOC_CONFIG_SCHEMA_VERSION
 } from "./schema.mjs";
+
+/**
+ * Public metadata-only evaluator for optional Unicode-compatible host handoffs.
+ * 面向可选 Unicode-compatible 宿主交接的公开 metadata-only 评估器。
+ *
+ * It does not discover projects, read source/artifact bodies, or execute target commands.
+ * 它不发现项目、不读取源码/产物正文，也不执行目标命令。
+ */
+export {
+  UNICODE_COMPATIBLE_TARGET_FAMILY,
+  UNICODE_COMPATIBLE_TSDOC_HANDOFF_CONTRACT,
+  UNICODE_COMPATIBLE_TSDOC_HANDOFF_DIAGNOSTIC_CODES,
+  UNICODE_COMPATIBLE_TSDOC_HANDOFF_VERSION,
+  evaluateUnicodeCompatibleTsDocHandoff
+} from "./unicode-compatible-handoff.mjs";
 import { TSDOC_CONFIG_SCHEMA_ID, TSDOC_CONFIG_SCHEMA_VERSION } from "./schema.mjs";
 
 export const TSDOC_RUNNER_VERSION = "0.1.3";

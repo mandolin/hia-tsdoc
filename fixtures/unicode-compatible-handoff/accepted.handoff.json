@@ -1,0 +1,56 @@
+{
+  "contract": "unicode-compatible-tsdoc-handoff-request",
+  "contractVersion": "0.1.0-draft",
+  "target": {
+    "id": "unicodeartjs-compatible-host",
+    "family": "unicode-compatible"
+  },
+  "producerResult": {
+    "contract": "documentation-producer-result",
+    "contractVersion": "0.1.0-draft",
+    "producer": {
+      "id": "tsdoc",
+      "version": "0.1.3"
+    },
+    "status": "success",
+    "artifacts": [
+      { "id": "entry-generated-js", "kind": "generated-js", "path": "api/entry.js" },
+      { "id": "entry-ordinary-map", "kind": "ordinary-source-map", "path": "api/entry.js.map" },
+      { "id": "entry-tsdoc", "kind": "tsdoc-extraction", "path": "api/entry.tsdoc.json" },
+      { "id": "entry-jsdoc-bridge", "kind": "jsdoc-bridge", "path": "api/entry.jsdoc-bridge.json" },
+      { "id": "entry-hia", "kind": "hia-document", "path": "api/entry.hia.json" },
+      { "id": "entry-doc-map", "kind": "doc-source-map", "path": "api/entry.docmap.json" }
+    ]
+  },
+  "documentationEntries": [
+    {
+      "id": "tsdoc:entry:render",
+      "artifactIds": ["entry-hia", "entry-doc-map"]
+    }
+  ],
+  "sourceMapEvidence": {
+    "ordinary": [
+      {
+        "artifactId": "entry-ordinary-map",
+        "sourcesContentPolicy": "none",
+        "sourceBodyPresent": false,
+        "fetchedSourceBodyPresent": false
+      }
+    ],
+    "documentation": [
+      {
+        "artifactId": "entry-doc-map",
+        "linkage": "ts-to-js",
+        "sourceBodyPresent": false,
+        "fetchedSourceBodyPresent": false
+      }
+    ]
+  },
+  "releaseIsolation": {
+    "consumerSurface": "npm-tarball",
+    "localLink": false,
+    "targetRepositoryWrite": false,
+    "sourceBodyRead": false,
+    "network": false
+  }
+}

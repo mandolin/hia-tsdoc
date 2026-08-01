@@ -52,12 +52,27 @@ for (const packageRoot of packageRoots) {
     failed = true;
   }
   if (packageJson.name === "@hia-doc/tsdoc-runner") {
+    /** The optional handoff binary and pure evaluator must cross the same tarball boundary as the runner. / 可选 handoff binary 与 pure evaluator 必须和 runner 跨越同一 tarball boundary。 */
+    const handoffFiles = ["src/handoff-cli.mjs", "src/unicode-compatible-handoff.mjs"];
+    for (const handoffFile of handoffFiles) {
+      if (!packedPaths.has(handoffFile)) {
+        console.error(`Missing ${handoffFile} in @hia-doc/tsdoc-runner pack dry-run.`);
+        failed = true;
+      }
+    }
+  }
+  if (packageJson.name === "@hia-doc/tsdoc-runner") {
     if (packageJson.bin?.["hia-tsdoc"] !== "src/cli.mjs") {
       console.error("Missing hia-tsdoc bin alias in @hia-doc/tsdoc-runner.");
       failed = true;
     }
     if (packageJson.bin?.tsdoc !== "src/cli.mjs") {
       console.error("Missing tsdoc compatibility bin alias in @hia-doc/tsdoc-runner.");
+      failed = true;
+    }
+    /** Handoff has an independent name so normal TSDoc generation commands retain their existing surface. / handoff 采用独立名称，使普通 TSDoc generation command 保持原有 surface。 */
+    if (packageJson.bin?.["hia-tsdoc-handoff"] !== "src/handoff-cli.mjs") {
+      console.error("Missing hia-tsdoc-handoff bin in @hia-doc/tsdoc-runner.");
       failed = true;
     }
   }
