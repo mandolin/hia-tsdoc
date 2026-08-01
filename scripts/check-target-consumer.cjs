@@ -13,6 +13,8 @@ const consumerDirectory = path.join(tempRoot, "consumer");
 const exampleDirectory = path.join(root, "examples", "target-project");
 /** Synthetic handoff fixture verifies the packed optional CLI without consulting an external target. / synthetic handoff fixture 在不咨询外部 target 的情况下验证已打包的可选 CLI。 */
 const handoffFixturePath = path.join(root, "fixtures", "unicode-compatible-handoff", "accepted.handoff.json");
+/** Acceptance report fixture is copied into the temporary HIA-owned consumer only; it is never discovered from a target. / acceptance report fixture 只复制到临时 HIA-owned consumer；绝不从 target discovery。 */
+const acceptanceReportFixturePath = path.join(root, "fixtures", "unicode-owner-evidence-packet", "accepted.acceptance-report.json");
 const packageRoots = fs.readdirSync(path.join(root, "packages"), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => path.join(root, "packages", entry.name))
@@ -50,6 +52,15 @@ function main() {
   const handoffReport = readJson(path.join(consumerDirectory, "handoff-report.json"));
   if (handoffReport.contract !== "unicode-compatible-tsdoc-handoff" || handoffReport.status !== "accepted") {
     fail("Invalid packed Unicode-compatible TSDoc handoff report.");
+  }
+  /** Owner-packet reads two already-generated reports and remains entirely within the temporary consumer boundary. / owner-packet 读取两份已经生成的 report，且完全处于临时 consumer boundary 内。 */
+  const consumerAcceptanceReportPath = path.join(consumerDirectory, "acceptance-report.json");
+  fs.copyFileSync(acceptanceReportFixturePath, consumerAcceptanceReportPath);
+  runBinary(resolveConsumerBin("hia-tsdoc-owner-packet"), ["--acceptance", "acceptance-report.json", "--handoff", "handoff-report.json", "--packet-id", "unicode-owner-packet:consumer-r1", "--revision", "r1", "--out", "owner-packet.json"], consumerDirectory);
+  /** The packed packet proves public report composition without a monorepo link or target action. / packed packet 证明 public report composition，不需 monorepo link 或 target action。 */
+  const ownerPacket = readJson(path.join(consumerDirectory, "owner-packet.json"));
+  if (ownerPacket.contract !== "unicode-compatible-owner-evidence-packet" || ownerPacket.status !== "ready-for-owner-review") {
+    fail("Invalid packed Unicode-compatible owner evidence packet.");
   }
 
   const outputDirectory = path.join(consumerDirectory, "dist", "hia-tsdoc");

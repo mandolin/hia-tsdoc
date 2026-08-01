@@ -10,6 +10,7 @@
   "bin": {
     "hia-tsdoc": "src/cli.mjs",
     "hia-tsdoc-handoff": "src/handoff-cli.mjs",
+    "hia-tsdoc-owner-packet": "src/owner-evidence-packet-cli.mjs",
     "tsdoc": "src/cli.mjs"
   },
   "files": [

@@ -52,11 +52,16 @@ for (const packageRoot of packageRoots) {
     failed = true;
   }
   if (packageJson.name === "@hia-doc/tsdoc-runner") {
-    /** The optional handoff binary and pure evaluator must cross the same tarball boundary as the runner. / 可选 handoff binary 与 pure evaluator 必须和 runner 跨越同一 tarball boundary。 */
-    const handoffFiles = ["src/handoff-cli.mjs", "src/unicode-compatible-handoff.mjs"];
-    for (const handoffFile of handoffFiles) {
-      if (!packedPaths.has(handoffFile)) {
-        console.error(`Missing ${handoffFile} in @hia-doc/tsdoc-runner pack dry-run.`);
+    /** The optional handoff and owner-packet binaries/evaluators must cross the same tarball boundary as the runner. / 可选 handoff 与 owner-packet binary/evaluator 必须和 runner 跨越同一 tarball boundary。 */
+    const unicodeBoundaryFiles = [
+      "src/handoff-cli.mjs",
+      "src/unicode-compatible-handoff.mjs",
+      "src/owner-evidence-packet-cli.mjs",
+      "src/unicode-compatible-owner-evidence-packet.mjs"
+    ];
+    for (const unicodeBoundaryFile of unicodeBoundaryFiles) {
+      if (!packedPaths.has(unicodeBoundaryFile)) {
+        console.error(`Missing ${unicodeBoundaryFile} in @hia-doc/tsdoc-runner pack dry-run.`);
         failed = true;
       }
     }
@@ -73,6 +78,11 @@ for (const packageRoot of packageRoots) {
     /** Handoff has an independent name so normal TSDoc generation commands retain their existing surface. / handoff 采用独立名称，使普通 TSDoc generation command 保持原有 surface。 */
     if (packageJson.bin?.["hia-tsdoc-handoff"] !== "src/handoff-cli.mjs") {
       console.error("Missing hia-tsdoc-handoff bin in @hia-doc/tsdoc-runner.");
+      failed = true;
+    }
+    /** Owner-packet has an independent name so handoff and ordinary generation remain backward compatible. / owner-packet 采用独立名称，使 handoff 与普通 generation 保持 backward compatible。 */
+    if (packageJson.bin?.["hia-tsdoc-owner-packet"] !== "src/owner-evidence-packet-cli.mjs") {
+      console.error("Missing hia-tsdoc-owner-packet bin in @hia-doc/tsdoc-runner.");
       failed = true;
     }
   }

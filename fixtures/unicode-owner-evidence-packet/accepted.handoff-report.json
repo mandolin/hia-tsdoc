@@ -1,0 +1,49 @@
+{
+  "artifacts": [
+    { "id": "entry-generated-js", "kind": "generated-js" },
+    { "id": "entry-ordinary-map", "kind": "ordinary-source-map" },
+    { "id": "entry-tsdoc", "kind": "tsdoc-extraction" },
+    { "id": "entry-jsdoc-bridge", "kind": "jsdoc-bridge" },
+    { "id": "entry-hia", "kind": "hia-document" },
+    { "id": "entry-doc-map", "kind": "doc-source-map" }
+  ],
+  "contract": "unicode-compatible-tsdoc-handoff",
+  "contractVersion": "0.1.0-draft",
+  "diagnostics": [],
+  "entries": [
+    {
+      "artifactIds": ["entry-hia", "entry-doc-map"],
+      "id": "tsdoc:entry:render"
+    }
+  ],
+  "permissions": {
+    "networkAccessed": false,
+    "packagePublished": false,
+    "targetArtifactBodyRead": false,
+    "targetCommandExecuted": false,
+    "targetRepositoryWrite": false,
+    "targetSourceBodyRead": false
+  },
+  "producer": {
+    "id": "tsdoc",
+    "status": "success",
+    "version": "0.1.3"
+  },
+  "releaseIsolation": {
+    "consumerSurface": "npm-tarball",
+    "localLink": false,
+    "network": false,
+    "sourceBodyRead": false,
+    "targetRepositoryWrite": false
+  },
+  "sourceMaps": {
+    "documentationSourceMapCount": 1,
+    "ordinarySourceMapCount": 1,
+    "sourcesContentPolicy": "none"
+  },
+  "status": "accepted",
+  "target": {
+    "family": "unicode-compatible",
+    "id": "unicodeartjs-compatible-host"
+  }
+}

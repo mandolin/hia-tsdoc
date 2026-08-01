@@ -38,3 +38,26 @@ repository, read TypeScript/source-map/artifact bodies, run target commands, wri
 use local links, access the network, or publish a package. `sourcesContentPolicy` must be `none`; an
 embedded/fetched source body, an absolute-like artifact path, a duplicate stable entry, or a non-tarball
 consumer boundary is refused.
+
+## Owner evidence packet
+
+`hia-tsdoc-owner-packet` combines two already-materialized public-safe reports into an optional
+owner-review packet. It accepts an `target-documentation-acceptance@0.1.0-draft` report and an
+`unicode-compatible-tsdoc-handoff@0.1.0-draft` report for the same Unicode-compatible target identity.
+
+```sh
+hia-tsdoc-owner-packet --acceptance acceptance-report.json --handoff handoff-report.json --packet-id unicode-owner-packet:review-r1 --revision r1 --out owner-packet.json
+```
+
+The command emits `unicode-compatible-owner-evidence-packet@0.1.0-draft`. A ready packet contains only
+count/policy summaries, exact source-report versions, fixed evidence semantics, and an explicit
+`entryIdentityCorrelation: "not-asserted"`; it does not claim cross-report entry identity correlation.
+An invalid version, target mismatch, unsafe source/path/permission declaration, unknown report field, or
+caller claim that a target ran or adopted the output yields a privacy-safe `refused` packet with fixed
+bilingual diagnostics. Refusals do not reflect packet ids, target identities, input report bodies, paths,
+working state, or credentials.
+
+Only the two explicitly named safe-relative JSON files are read. The optional `--out` is also
+safe-relative; without it the packet is written to standard output. This utility never discovers a target
+repository, reads source/artifact/source-map bodies, runs target commands, writes a target repository,
+uses a local link, accesses the network, publishes a package, or declares target adoption.

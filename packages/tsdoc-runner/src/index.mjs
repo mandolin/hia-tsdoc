@@ -34,6 +34,20 @@ export {
   UNICODE_COMPATIBLE_TSDOC_HANDOFF_VERSION,
   evaluateUnicodeCompatibleTsDocHandoff
 } from "./unicode-compatible-handoff.mjs";
+
+/**
+ * Public metadata-only evaluator for optional Unicode-compatible owner evidence packets.
+ * 面向可选 Unicode-compatible owner evidence packet 的公开 metadata-only 评估器。
+ *
+ * It combines two explicit report objects only; it does not import the main CLI runtime or discover a target project.
+ * 它只组合两份显式 report object；不导入 main CLI runtime，也不发现 target project。
+ */
+export {
+  UNICODE_COMPATIBLE_OWNER_EVIDENCE_PACKET_CONTRACT,
+  UNICODE_COMPATIBLE_OWNER_EVIDENCE_PACKET_DIAGNOSTIC_CODES,
+  UNICODE_COMPATIBLE_OWNER_EVIDENCE_PACKET_VERSION,
+  createUnicodeCompatibleOwnerEvidencePacket
+} from "./unicode-compatible-owner-evidence-packet.mjs";
 import { TSDOC_CONFIG_SCHEMA_ID, TSDOC_CONFIG_SCHEMA_VERSION } from "./schema.mjs";
 
 export const TSDOC_RUNNER_VERSION = "0.1.3";

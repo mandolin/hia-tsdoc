@@ -1,0 +1,43 @@
+{
+  "acceptance": {
+    "requiredOutputs": {
+      "indexHtml": true,
+      "manifest": true,
+      "projectIndex": true
+    },
+    "producerCompatibility": {
+      "artifactCount": 6,
+      "producerCount": 1,
+      "successfulProducerCount": 1
+    },
+    "requiredPermissions": {
+      "network": false,
+      "sourceBodyRead": false,
+      "targetRepositoryWrite": false
+    },
+    "stableEntryIdentity": {
+      "duplicateCount": 0,
+      "entryCount": 1,
+      "uniqueCount": 1
+    }
+  },
+  "contract": "target-documentation-acceptance",
+  "contractVersion": "0.1.0-draft",
+  "diagnostics": [],
+  "input": {
+    "contract": "hia-generated-docs-evidence-summary",
+    "contractVersion": "0.1.0-draft"
+  },
+  "privacy": {
+    "absolutePathLikeStringCount": 0,
+    "sourceBodyPresent": false,
+    "sourcePresentation": "none",
+    "sourcesContentPolicy": "none",
+    "sourcesContentPresent": false
+  },
+  "status": "accepted",
+  "target": {
+    "family": "unicode-compatible",
+    "id": "unicodeartjs-compatible-host"
+  }
+}
