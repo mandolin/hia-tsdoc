@@ -87,6 +87,14 @@ hia-tsdoc --config tsdoc.config.json
 
 `sourcesContentPolicy` defaults to `none`; embedding source text should remain an explicit opt-in and must be release-gated by the consuming project.
 
+### Verified ordinary source-map coordinates (opt-in)
+
+Set `options.emitCoordinateProfile` to `true`, or pass `--coordinate-profile` to the CLI, to emit one `ordinary-source-map-coordinate-profile@0.1.0-draft` sidecar per TypeScript input. The sidecar binds the actual bytes of the final ordinary `.js.map`, `doc-source-map@1.1.0`, and the authorized primary TypeScript source. It declares a UTF-16 original-source slot only when the compiler map contains a segment for that slot. A consumer must still check the actual bytes and query each documentation reference; the sidecar alone does not make every symbol an exact anchor.
+
+This mode requires `emitDocSourceMap: true`, `sourcesContentPolicy: "none"`, compiler config isolation (`ignoreConfig` enabled), a single valid UTF-8 source of at most 16 MiB, and an output directory inside the workspace. The runner compiles a private immutable copy of those source bytes, verifies the compiler's sole source slot, then replaces its temporary map source with the original workspace-relative source before writing and hashing the final map. Unsupported imports, multiple source slots, linked output paths, oversized artifacts, or missing evidence fail without a new sidecar. For each input that reaches safe path preflight, an old sidecar is revoked before processing. An abort or request failure before that point may leave an earlier file on disk, so consumers must always recheck actual source and map bytes rather than trusting file presence. Source text and temporary paths are never stored in the sidecar. Existing builds remain opt-out by default.
+
+TypeScript 7.0 exposes its native `tsc` command while its stable programmatic API is pending; the runner therefore uses the native CLI for this isolated compile. See the [TypeScript 7.0 announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/) and [TypeScript 7.1 beta announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-1-beta/) for the API boundary. Static output-path checks reject existing redirects; a concurrent adversary changing filesystem components during a build requires host-level directory isolation.
+
 For bundler-oriented TypeScript projects, prefer a documentation-specific `tsdoc.config.json` instead of changing the production `tsconfig.json`. Set `options.moduleResolution` to `bundler` when the source entry depends on package exports, extensionless ESM imports or other bundler-style resolution behavior.
 
 HIA TSDoc accepts `@performance` as a project-level block tag for complexity, caching, memory or rendering-performance notes. Use standard TSDoc `@throws` text without JSDoc-style type braces:

@@ -43,6 +43,8 @@ export const TSDOC_CONFIG_JSON_SCHEMA = Object.freeze({
       additionalProperties: false,
       properties: {
         emitDocSourceMap: { type: "boolean" },
+        // <lang><zh-CN>默认关闭的同轮普通坐标证据；兼容性约束由 runner 做交叉校验。</zh-CN><en>Opt-in same-build ordinary-coordinate evidence; the runner checks cross-option constraints.</en></lang>
+        emitCoordinateProfile: { type: "boolean" },
         ignoreConfig: { type: "boolean" },
         lib: {
           type: "array",

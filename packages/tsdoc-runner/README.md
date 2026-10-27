@@ -18,6 +18,12 @@ hia-tsdoc --workspace-root /path/to/project --out-dir /tmp/hia-tsdoc --module-re
 
 For project scripts, prefer a documentation-only `tsdoc.config.json` and set `options.moduleResolution` to `bundler` when the target project relies on bundler-style TypeScript resolution.
 
+## Verified ordinary source-map coordinates
+
+Use `--coordinate-profile` or set `options.emitCoordinateProfile: true` in `tsdoc.config.json` to request a body-free `ordinary-source-map-coordinate-profile@0.1.0-draft` sidecar beside each input's ordinary `.js.map`. This option is off by default. It requires a `doc-source-map@1.1.0`, `sourcesContentPolicy: "none"`, compiler config isolation and an output directory inside the workspace. The producer compiles an immutable private snapshot of the primary UTF-8 source, verifies the TypeScript compiler's single raw source slot, then signs the final written map, documentation map and source bytes. A consumer must independently verify those bytes and query each reference; only a matching segment is an exact anchor.
+
+The bounded mode refuses inputs whose source slot, import graph or output paths cannot be certified. An old sidecar is revoked once an input reaches safe path preflight; a request rejected or aborted before that point may leave an earlier file, so consumers must recheck actual source and map bytes on every use. It does not embed source text or temporary paths. TypeScript 7.0.2 uses its native `tsc` command here because TypeScript 7.0 has no stable programmatic API; see the [TypeScript 7.0 announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/). Existing output behavior remains the default when this flag is absent.
+
 ## Unicode-compatible host handoff
 
 `hia-tsdoc-handoff` evaluates an explicit, metadata-only handoff evidence JSON for a Unicode-compatible
