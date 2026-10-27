@@ -3,7 +3,15 @@ import { TSDOC_CLASSIFICATIONS, TSDOC_EXTRACTION_CONTRACT } from "@hia-doc/tsdoc
 const HIA_CORE_SCHEMA_VERSION = "0.2.0";
 const HIA_SOURCE_MODEL = "hia-source";
 const HIA_SOURCE_MODEL_VERSION = "0.2.0";
+const DOC_SOURCE_MAP_CONTRACT_VERSION = "1.1.0";
 
+/**
+ * @lang zh-CN 将 TypeScript 提取产物投影为 HIA 文档；映射元数据仅在实际映射路径存在时登记，版本可由运行器精确传入。
+ * @lang en Projects a TypeScript extraction artifact into an HIA document; registers map metadata only for an actual map path, with its precise version supplied by the runner.
+ * @param {object} tsArtifact <lang><zh-CN>TypeScript 提取产物。</zh-CN><en>TypeScript extraction artifact.</en></lang>
+ * @param {object} [options] <lang><zh-CN>文档及映射引用选项。</zh-CN><en>Document and map-reference options.</en></lang>
+ * @returns {object} <lang><zh-CN>HIA 核心文档，不包含源码正文。</zh-CN><en>HIA core document without source bodies.</en></lang>
+ */
 export function tsDocToHiaDocument(tsArtifact, options = {}) {
   assertTsDocArtifact(tsArtifact);
   const runtimeSymbols = tsArtifact.symbols.filter((symbol) => symbol.classification === TSDOC_CLASSIFICATIONS.runtime);
@@ -43,7 +51,7 @@ export function tsDocToHiaDocument(tsArtifact, options = {}) {
         ? [
             {
               contract: "doc-source-map",
-              contractVersion: "0.1.0-draft",
+              contractVersion: options.docSourceMapContractVersion ?? DOC_SOURCE_MAP_CONTRACT_VERSION,
               path: options.docSourceMapPath,
               entryArtifact: options.entryArtifact ?? null
             }

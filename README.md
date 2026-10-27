@@ -16,13 +16,13 @@ This repository is an umbrella monorepo for TypeScript/TSDoc documentation speci
 
 ## Status
 
-This workspace now includes the first TypeScript -> JavaScript generated-source fixture. The P1 path uses TypeScript compiler APIs and the official TSDoc parser:
+This workspace now includes the first TypeScript -> JavaScript generated-source fixture. The P1 path uses the TypeScript compiler CLI, the official TSDoc parser and a conservative scanner for exported declaration locations:
 
 - TypeScript source is compiled to JavaScript and an ordinary source map.
 - TSDoc comments are parsed from TypeScript declarations.
 - Runtime symbols and type-only symbols are separated in the TS extraction artifact.
 - Type-only symbols remain in TS artifact/HIA metadata for P1 and are not promoted to stable HIA core symbol kinds.
-- `doc-source-map` records TS source ranges, generated JS artifact references, ordinary source map references and type-only diagnostics.
+- `doc-source-map@1.1.0` records TS source ranges, generated JS artifact references, ordinary source map references and type-only diagnostics. Each ranged source reference declares its end boundary and column unit: measured attached comments use an exclusive UTF-16 boundary, while declaration scanner fallbacks retain an unknown end boundary. Foreign extraction artifacts retain unknown precision.
 - `@hia-doc/tsdoc-runner` can run the same pipeline from JSON config or CLI inputs and emit a `documentation-producer-result`.
 - `@hia-doc/tsdoc-producer` exposes the same runner through the producer contract for HIA-Documentation-Sys orchestration.
 

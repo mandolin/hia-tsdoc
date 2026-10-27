@@ -19,7 +19,7 @@
     "release:publish": "npm run release:gate && npm run release:registry:preflight && node scripts/publish-packages.cjs",
     "release:trusted-publish:configure": "node scripts/configure-trusted-publishers.cjs",
     "smoke:standalone": "node packages/tsdoc-runner/src/cli.mjs --config examples/standalone/tsdoc.config.json",
-    "test": "npm run build:fixtures && node --test test/tsdoc-fixture.test.mjs test/tsdoc-unicode-handoff.test.mjs test/tsdoc-owner-evidence-packet.test.mjs",
+    "test": "npm run build:fixtures && node --test test/tsdoc-fixture.test.mjs test/source-range.test.mjs test/doc-source-map-v11.test.mjs test/tsdoc-unicode-handoff.test.mjs test/tsdoc-owner-evidence-packet.test.mjs",
     "test:all": "npm run release:gate"
   },
   "workspaces": [

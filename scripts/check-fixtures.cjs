@@ -47,12 +47,19 @@ function main() {
 
   const docmap = readJson("calculator.docmap.json");
   assert.equal(docmap.contract, "doc-source-map");
-  assert.equal(docmap.contractVersion, "0.1.0-draft");
+  assert.equal(docmap.contractVersion, "1.1.0");
   assert.equal(docmap.privacy.sourcesContentPolicy, "none");
   assert.equal(docmap.sourceMaps[0].pointer.status, "not-written");
   assert.equal(docmap.sourceMaps[0].pointer.reservedExtensionField, "x_doc_source_map");
   assert.ok(docmap.entries.some((entry) => entry.id === "entry:function-add" && entry.artifactRefs.length === 1));
   assert.ok(docmap.entries.some((entry) => entry.id === "entry:interface-addinput" && entry.artifactRefs.length === 0 && entry.diagnostics.includes("TS_TYPE_ONLY_NO_JS_EMIT")));
+  for (const entry of docmap.entries) {
+    for (const sourceRef of entry.sourceRefs) {
+      assert.deepEqual(sourceRef.rangeConvention, { endBoundary: "exclusive", columnUnit: "utf16-code-unit" });
+      assert.equal(sourceRef.rangeSource, "heuristic");
+      assert.equal(sourceRef.rangeSourceDetail, "tsdoc-fixture-scanner:attached-comment");
+    }
+  }
   for (const source of docmap.sources) {
     assertSafeRelativePath(source.path);
     assert.equal(source.sourcesContentPolicy, "none");
@@ -70,6 +77,7 @@ function main() {
   assert.equal(hia.symbols.some((symbol) => symbol.id === "interface:AddInput"), false);
   assert.ok(hia.metadata.typeOnlySymbols.some((symbol) => symbol.id === "interface:AddInput"));
   assert.ok(hia.metadata.docSourceMaps[0].path.endsWith("calculator.docmap.json"));
+  assert.equal(hia.metadata.docSourceMaps[0].contractVersion, docmap.contractVersion);
 
   expectNoLocalPathLeakage(fixtureRoot);
   console.log("TSDoc fixture check passed.");

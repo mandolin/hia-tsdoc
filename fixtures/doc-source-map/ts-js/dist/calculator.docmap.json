@@ -1,6 +1,6 @@
 {
   "contract": "doc-source-map",
-  "contractVersion": "0.1.0-draft",
+  "contractVersion": "1.1.0",
   "id": "docmap:ts-js:fixtures-doc-source-map-ts-js-src-calculator-ts",
   "producer": {
     "name": "@hia-doc/ts-to-js-doc-source-map",
@@ -135,7 +135,12 @@
               "column": 4
             }
           },
-          "rangeSource": "typescript-compiler",
+          "rangeConvention": {
+            "endBoundary": "exclusive",
+            "columnUnit": "utf16-code-unit"
+          },
+          "rangeSource": "heuristic",
+          "rangeSourceDetail": "tsdoc-fixture-scanner:attached-comment",
           "confidence": "high"
         }
       ],
@@ -178,7 +183,12 @@
               "column": 4
             }
           },
-          "rangeSource": "typescript-compiler",
+          "rangeConvention": {
+            "endBoundary": "exclusive",
+            "columnUnit": "utf16-code-unit"
+          },
+          "rangeSource": "heuristic",
+          "rangeSourceDetail": "tsdoc-fixture-scanner:attached-comment",
           "confidence": "high"
         }
       ],

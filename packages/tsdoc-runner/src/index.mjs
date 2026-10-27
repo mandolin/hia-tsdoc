@@ -197,26 +197,30 @@ async function processInput(input, request, index) {
     sourcesContentPolicy: request.options.sourcesContentPolicy
   });
   const jsDocBridge = tsDocToJsDocBridgeArtifact(tsArtifact, { jsPath });
+  // <lang><zh-CN>先生成可选映射，HIA 文档与结果清单才可引用真实存在的同版本工件。</zh-CN><en>Create the optional map first so the HIA document and result manifest can reference a real artifact with the same version.</en></lang>
+  const docSourceMap = request.options.emitDocSourceMap
+    ? createTsJsDocSourceMap({
+        id: `docmap:ts-js:${slug(sourcePath)}`,
+        tsArtifact,
+        jsPath,
+        sourceMapPath,
+        tsDocPath,
+        jsDocBridgePath,
+        hiaDocumentPath
+      })
+    : null;
   const hiaDocument = tsDocToHiaDocument(tsArtifact, {
     id: `tsdoc:${sourcePath}`,
     title: path.posix.basename(sourcePath),
-    docSourceMapPath,
+    docSourceMapPath: docSourceMap ? docSourceMapPath : undefined,
+    docSourceMapContractVersion: docSourceMap?.contractVersion,
     entryArtifact: jsPath
-  });
-  const docSourceMap = createTsJsDocSourceMap({
-    id: `docmap:ts-js:${slug(sourcePath)}`,
-    tsArtifact,
-    jsPath,
-    sourceMapPath,
-    tsDocPath,
-    jsDocBridgePath,
-    hiaDocumentPath
   });
 
   await writeJson(path.join(request.outputDirectory, tsDocPath), tsArtifact);
   await writeJson(path.join(request.outputDirectory, jsDocBridgePath), jsDocBridge);
   await writeJson(path.join(request.outputDirectory, hiaDocumentPath), hiaDocument);
-  if (request.options.emitDocSourceMap) {
+  if (docSourceMap) {
     await writeJson(path.join(request.outputDirectory, docSourceMapPath), docSourceMap);
   }
 
@@ -237,11 +241,11 @@ async function processInput(input, request, index) {
     artifact(`${artifactIdBase}-hia-document`, "hia-document", hiaDocumentPath, "json", "application/json", request.profileIds)
   ];
 
-  if (request.options.emitDocSourceMap) {
+  if (docSourceMap) {
     artifacts.push({
       ...artifact(`${artifactIdBase}-doc-source-map`, "doc-source-map", docSourceMapPath, "json", "application/json", request.profileIds),
       contract: "doc-source-map",
-      contractVersion: "0.1.0-draft"
+      contractVersion: docSourceMap.contractVersion
     });
   }
 

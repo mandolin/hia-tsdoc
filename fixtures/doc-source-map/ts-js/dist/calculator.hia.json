@@ -149,7 +149,7 @@
     "docSourceMaps": [
       {
         "contract": "doc-source-map",
-        "contractVersion": "0.1.0-draft",
+        "contractVersion": "1.1.0",
         "path": "calculator.docmap.json",
         "entryArtifact": "calculator.js"
       }
