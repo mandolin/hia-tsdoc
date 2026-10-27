@@ -55,7 +55,7 @@ export function extractTsDoc(source, options = {}) {
     if (!declaration) {
       continue;
     }
-    const sourceRange = declarationRange(lines, index);
+    const sourceRange = declarationRange(lines, index, declaration);
     const comment = extractAttachedComment(lines, index, { defaultLocale });
     const symbol = createSymbol({
       declaration,
@@ -323,15 +323,77 @@ function createSymbol({ declaration, sourcePath, sourceRange }) {
   });
 }
 
-function declarationRange(lines, startIndex) {
+/**
+ * @lang zh-CN 在当前保守导出声明扫描范围内定位排除式终点；顶层类型分号或函数/类/接口体的闭合为终止条件。
+ * @lang en Locates an exclusive end within the current conservative exported-declaration scan; a top-level type semicolon or a closed function/class/interface body terminates it.
+ * @param {string[]} lines <lang><zh-CN>已标准化换行的 UTF-16 源码行。</zh-CN><en>UTF-16 source lines with normalized line endings.</en></lang>
+ * @param {number} startIndex <lang><zh-CN>导出声明起始的零基行索引。</zh-CN><en>Zero-based line index where the exported declaration starts.</en></lang>
+ * @param {{kind:string}} declaration <lang><zh-CN>已识别的保守声明类别。</zh-CN><en>Recognized conservative declaration kind.</en></lang>
+ * @returns {{start:{line:number,column:number},end:{line:number,column:number}}} <lang><zh-CN>一基行列范围，终点排除；复杂模板字面量和未闭合声明仍仅是扫描器估计。</zh-CN><en>One-based line-column range with an exclusive end; complex template literals and unclosed declarations remain scanner estimates.</en></lang>
+ */
+function declarationRange(lines, startIndex, declaration) {
   let endIndex = startIndex;
-  let depth = 0;
+  // <lang><zh-CN>分别跟踪签名括号与类型/函数体大括号，以免参数默认对象过早结束声明。</zh-CN><en>Track signature parentheses separately from type/body braces so parameter defaults cannot end a declaration early.</en></lang>
+  let parenthesisDepth = 0;
+  let bracketDepth = 0;
+  let braceDepth = 0;
+  let quote = null;
+  let escaped = false;
+  let blockComment = false;
   for (let index = startIndex; index < lines.length; index += 1) {
     const line = lines[index];
-    depth += count(line, "{");
-    depth -= count(line, "}");
-    endIndex = index;
-    if (index > startIndex && depth <= 0) {
+    // <lang><zh-CN>没有显式分号的类型别名只在下一个顶层导出前回退，不能吞入相邻声明。</zh-CN><en>For an alias without a semicolon, stop before the next top-level export rather than swallowing its declaration.</en></lang>
+    if (index > startIndex && parenthesisDepth === 0 && bracketDepth === 0 && braceDepth === 0 && /^\s*export\b/.test(line)) {
+      break;
+    }
+    let closedTopLevelBrace = false;
+    let topLevelSemicolon = false;
+    for (let column = 0; column < line.length; column += 1) {
+      const character = line[column];
+      const next = line[column + 1];
+      // <lang><zh-CN>字符串和注释中的标点没有声明边界语义。</zh-CN><en>Punctuation inside strings and comments has no declaration-boundary meaning.</en></lang>
+      if (blockComment) {
+        if (character === "*" && next === "/") {
+          blockComment = false;
+          column += 1;
+        }
+        continue;
+      }
+      if (quote) {
+        if (escaped) {
+          escaped = false;
+        } else if (character === "\\") {
+          escaped = true;
+        } else if (character === quote) {
+          quote = null;
+        }
+        continue;
+      }
+      if (character === "/" && next === "/") break;
+      if (character === "/" && next === "*") {
+        blockComment = true;
+        column += 1;
+        continue;
+      }
+      if (character === "'" || character === '"' || character === "`") {
+        quote = character;
+        continue;
+      }
+      if (character === "(") parenthesisDepth += 1;
+      if (character === ")") parenthesisDepth = Math.max(0, parenthesisDepth - 1);
+      if (character === "[") bracketDepth += 1;
+      if (character === "]") bracketDepth = Math.max(0, bracketDepth - 1);
+      if (character === "{") braceDepth += 1;
+      if (character === "}") {
+        braceDepth = Math.max(0, braceDepth - 1);
+        if (braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0) closedTopLevelBrace = true;
+      }
+      if (character === ";" && braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0) topLevelSemicolon = true;
+    }
+    // <lang><zh-CN>无分号类型在遇到下个 export 前可能有空行，范围终点留在最后一行内容。</zh-CN><en>An unterminated alias may have blank lines before the next export; keep its end on the last content line.</en></lang>
+    if (line.trim()) endIndex = index;
+    // <lang><zh-CN>类型别名内部的对象成员分号不能终止别名；其顶层分号可以。其它声明以完整体或无体签名结束。</zh-CN><en>Object-member semicolons cannot end a type alias, while its top-level semicolon can; other declarations end at a closed body or bodyless signature.</en></lang>
+    if (topLevelSemicolon || (declaration.kind !== TSDOC_SYMBOL_KINDS.typeAlias && closedTopLevelBrace && braceDepth === 0 && !lines.slice(index + 1).find((item) => item.trim())?.trimStart().startsWith("{"))) {
       break;
     }
   }
@@ -572,10 +634,6 @@ function stripComment(rawComment) {
     .split("\n")
     .map((line) => line.replace(/^\s*\* ?/, "").trim())
     .filter(Boolean);
-}
-
-function count(value, character) {
-  return [...String(value)].filter((item) => item === character).length;
 }
 
 function firstNonWhitespaceColumn(line) {
