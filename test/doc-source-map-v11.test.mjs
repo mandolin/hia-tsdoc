@@ -109,6 +109,44 @@ test("does not reference a map when map emission is disabled", async () => {
   }
 });
 
+/** @lang zh-CN 真实运行器须把同行第二函数贯穿提取、HIA、桥接和两段映射链，并保持类型仅在元数据中。 @lang en The real runner must carry the second same-line function through extraction, HIA, bridge, and both map stages while leaving types in metadata only. */
+test("carries distinct same-line exports through the generated chain", async () => {
+  const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "hia-tsdoc-same-line-"));
+  try {
+    const source = [
+      "/** First. */",
+      "export function first(): number { return 1; } export function second(): number { return 2; }",
+      "export type One = string; export type Two = number;"
+    ].join("\r\n");
+    await fs.writeFile(path.join(workspaceRoot, "sample.ts"), source, "utf8");
+    const outputDirectory = path.join(workspaceRoot, "generated");
+    const result = await runTsDoc({
+      workspaceRoot,
+      outputDirectory,
+      inputs: [{ kind: "typescript-entry", path: "sample.ts", artifactBasePath: "sample" }],
+      options: { emitDocSourceMap: true, sourcesContentPolicy: "none", writeResultManifest: false }
+    });
+    assert.equal(result.status, "success");
+    const extraction = JSON.parse(await fs.readFile(path.join(outputDirectory, "sample.tsdoc.json"), "utf8"));
+    const hia = JSON.parse(await fs.readFile(path.join(outputDirectory, "sample.hia.json"), "utf8"));
+    const bridge = JSON.parse(await fs.readFile(path.join(outputDirectory, "sample.jsdoc-bridge.json"), "utf8"));
+    const map = JSON.parse(await fs.readFile(path.join(outputDirectory, "sample.docmap.json"), "utf8"));
+    assert.deepEqual(extraction.symbols.map((symbol) => symbol.id), ["function:first", "function:second", "type:One", "type:Two"]);
+    assert.deepEqual(hia.symbols.map((symbol) => symbol.id), ["function:first", "function:second"]);
+    assert.deepEqual(hia.metadata.typeOnlySymbols.map((symbol) => symbol.id), ["type:One", "type:Two"]);
+    assert.deepEqual(bridge.runtimeSymbols.map((symbol) => symbol.id), ["function:first", "function:second"]);
+    assert.deepEqual(bridge.typeOnlySymbols.map((symbol) => symbol.id), ["type:One", "type:Two"]);
+    assert.deepEqual(map.entries.map((entry) => entry.symbolId), ["function:first", "function:second", "type:One", "type:Two"]);
+    assert.deepEqual(map.chains[0].stages[0].linkage, map.entries.map((entry) => entry.id));
+    assert.deepEqual(map.chains[0].stages[1].linkage, map.entries.slice(0, 2).map((entry) => entry.id));
+    assert.ok(map.entries.slice(2).every((entry) => entry.artifactRefs.length === 0));
+    assert.deepEqual(map.entries.find((entry) => entry.symbolId === "function:second").sourceRefs[0].rangeConvention,
+      { endBoundary: "unknown", columnUnit: "utf16-code-unit" });
+  } finally {
+    await removeTemporaryOutput(workspaceRoot, "hia-tsdoc-same-line-");
+  }
+});
+
 /**
  * @lang zh-CN 仅构建仓内合成 TypeScript 夹具，输出送到系统临时目录。
  * @lang en Builds only the repository's synthetic TypeScript fixture and writes into a system temporary directory.

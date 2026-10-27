@@ -76,3 +76,56 @@ test("does not include blank lines or the next export for an unterminated alias"
     start: { line: 1, column: 1 }, end: { line: 2, column: 9 }
   });
 });
+
+/** @lang zh-CN 同行不同名运行时声明分别保留完整身份和不重叠的 UTF-16 范围。 @lang en Distinct same-line runtime declarations retain separate identities and nonoverlapping UTF-16 ranges. */
+test("extracts two same-line exported functions without swallowing the second", () => {
+  const source = "export function one(): number { return 1; } export function two(): number { return 2; }";
+  const artifact = extractTsDoc(source, { path: "fixtures/range-probe.ts" });
+  assert.deepEqual(artifact.symbols.map((symbol) => symbol.id), ["function:one", "function:two"]);
+  assert.deepEqual(rangeOf(source, "function:one"), {
+    start: { line: 1, column: 1 }, end: { line: 1, column: source.indexOf("} export") + 2 }
+  });
+  assert.deepEqual(rangeOf(source, "function:two"), {
+    start: { line: 1, column: source.indexOf("export function two") + 1 },
+    end: { line: 1, column: source.length + 1 }
+  });
+});
+
+/** @lang zh-CN 类型与运行时混排仍逐声明提取，类型不得伪造运行时产物。 @lang en Mixed type and runtime declarations are extracted separately without inventing type runtime output. */
+test("extracts distinct same-line types and mixed declarations", () => {
+  const types = "export type One = string; export type Two = number;";
+  const mixed = "export interface Shape { x: number } export class Box {} export function make(): void {}";
+  assert.deepEqual(extractTsDoc(types).symbols.map((symbol) => symbol.id), ["type:One", "type:Two"]);
+  assert.deepEqual(rangeOf(types, "type:One").end, { line: 1, column: types.indexOf(";") + 2 });
+  const artifact = extractTsDoc(mixed);
+  assert.deepEqual(artifact.symbols.map((symbol) => symbol.id), ["interface:Shape", "class:Box", "function:make"]);
+  assert.equal(artifact.symbols[0].runtime.emitted, false);
+  assert.ok(artifact.symbols[0].source.range.end.column <= artifact.symbols[1].source.range.start.column);
+  assert.ok(artifact.symbols[1].source.range.end.column <= artifact.symbols[2].source.range.start.column);
+});
+
+/** @lang zh-CN 字符串、模板、注释和嵌套体内的 export 不应产生虚假顶层符号。 @lang en Exports inside strings, templates, comments, and nested bodies must not fabricate top-level symbols. */
+test("ignores export text outside top-level code", () => {
+  const source = [
+    "const quoted = 'export function fakeOne() {}';",
+    "const doubleQuoted = \"export type FakeTwo = string;\";",
+    "const template = `export interface FakeThree {}`;",
+    "const pattern = /export function fakeRegex()/;",
+    "if (true) /export function fakeConditional()/;",
+    "/* export class FakeFour {} */",
+    "// export function fakeFive() {}",
+    "export function real(): void { const nested = 'export type FakeSix = number;'; }"
+  ].join("\n");
+  assert.deepEqual(extractTsDoc(source).symbols.map((symbol) => symbol.id), ["function:real"]);
+});
+
+/** @lang zh-CN 非 BMP 前缀占两个 UTF-16 单位，CRLF 不增加列宽；首个 TSDoc 不可复制到同行下一项。 @lang en A non-BMP prefix occupies two UTF-16 units while CRLF does not widen columns; the first TSDoc cannot attach to the next same-line item. */
+test("keeps UTF-16 positions and same-line comment ownership", () => {
+  const line = "/*😀*/ export function one(): void {} /** Second. */ export function two(): void {}";
+  const artifact = extractTsDoc(`/** First. */\r\n${line}`, { path: "fixtures/range-probe.ts" });
+  assert.deepEqual(artifact.symbols.map((symbol) => symbol.id), ["function:one", "function:two"]);
+  assert.equal(artifact.symbols[0].source.range.start.column, line.indexOf("export function one") + 1);
+  assert.equal(artifact.symbols[1].source.range.start.column, line.indexOf("export function two") + 1);
+  assert.notEqual(artifact.symbols[0].comment?.summary, artifact.symbols[1].comment?.summary);
+  assert.equal(artifact.symbols[1].comment?.summary, "Second.");
+});

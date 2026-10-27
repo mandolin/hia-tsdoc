@@ -35,28 +35,37 @@ const HIA_TEXT_I18N_MODEL = "hia-text-i18n";
 const HIA_TEXT_I18N_MODEL_VERSION = "0.2.0";
 
 /**
- * Extracts a draft TSDoc documentation artifact from one TypeScript source file.
- *
- * @lang zh-CN 从单个 TypeScript 源文件提取 TSDoc 文档化草案产物；当前实现是保守声明扫描器，主要覆盖导出的函数、类、接口和类型别名。
- * @param {string} source TypeScript source text.
- * @param {{ path?: string, generatedJsPath?: string, sourcesContentPolicy?: string }} [options] Extraction source and artifact options.
- * @returns {object} Draft `hia-tsdoc-extraction` artifact.
+ * @lang zh-CN 从单个 TypeScript 源文件提取 TSDoc 草案；保守扫描器识别不同名顶层导出函数、类、接口和类型别名，包括同行声明。复杂语法、同名重载及合并仍不保证，且本函数不写文件。
+ * @lang en Extracts a draft TSDoc artifact from one TypeScript file. The conservative scanner recognizes distinct-name top-level exported functions, classes, interfaces, and aliases, including same-line declarations. Complex syntax, same-name overloads, and merging remain unsupported; this function writes no files.
+ * @param {string} source <lang><zh-CN>TypeScript 源码正文，换行将标准化，列数按 UTF-16 计算。</zh-CN><en>TypeScript source text, with normalized line endings and UTF-16 columns.</en></lang>
+ * @param {{ path?: string, generatedJsPath?: string, sourcesContentPolicy?: string }} [options] <lang><zh-CN>安全相对源路径、可选生成产物路径与源码正文策略。</zh-CN><en>Safe relative source path, optional generated artifact path, and source-content policy.</en></lang>
+ * @returns {object} <lang><zh-CN>`hia-tsdoc-extraction` 草案工件；未写磁盘。</zh-CN><en>Draft `hia-tsdoc-extraction` artifact without writing to disk.</en></lang>
+ * @throws {Error} <lang><zh-CN>源或生成产物路径不安全时抛错。</zh-CN><en>Throws when a source or generated artifact path is unsafe.</en></lang>
  */
 export function extractTsDoc(source, options = {}) {
   const sourcePath = normalizeSourcePath(options.path ?? "input.ts");
   const defaultLocale = normalizeLocale(options.defaultLocale) || DEFAULT_LOCALE;
-  const lines = String(source).replaceAll("\r\n", "\n").replaceAll("\r", "\n").split("\n");
+  // <lang><zh-CN>统一换行后保留 JavaScript UTF-16 偏移，供同一物理行的多个声明共享定位基准。</zh-CN><en>Normalize line endings while retaining JavaScript UTF-16 offsets for multiple declarations on one physical line.</en></lang>
+  const sourceText = String(source).replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+  const lines = sourceText.split("\n");
+  const lineStarts = sourceLineStarts(sourceText);
+  // <lang><zh-CN>仅顶层代码里的 export 与真实 TSDoc 块参与提取；字符串、模板、注释及嵌套体不产生符号。</zh-CN><en>Only top-level code exports and real TSDoc blocks participate; strings, templates, comments, and nested bodies cannot create symbols.</en></lang>
+  const { exportOffsets, docComments } = scanTopLevelExports(sourceText);
   const symbols = [];
   const comments = [];
   const diagnostics = [];
 
-  for (let index = 0; index < lines.length; index += 1) {
-    const declaration = parseDeclaration(lines, index);
+  for (const [position, offset] of exportOffsets.entries()) {
+    // <lang><zh-CN>每个顶层 export 按其真实列偏移识别，下一项即使同行也会限制当前范围。</zh-CN><en>Recognize each top-level export at its actual column; the next item bounds the current range even on the same line.</en></lang>
+    const start = sourceOffsetPosition(lineStarts, offset);
+    const declaration = parseDeclaration(lines, start.lineIndex, start.columnIndex);
     if (!declaration) {
       continue;
     }
-    const sourceRange = declarationRange(lines, index, declaration);
-    const comment = extractAttachedComment(lines, index, { defaultLocale });
+    const nextOffset = exportOffsets[position + 1];
+    const nextStart = nextOffset === undefined ? null : sourceOffsetPosition(lineStarts, nextOffset);
+    const sourceRange = declarationRange(lines, start.lineIndex, start.columnIndex, declaration, nextStart);
+    const comment = extractAttachedComment(sourceText, lineStarts, docComments, offset, { defaultLocale });
     const symbol = createSymbol({
       declaration,
       sourcePath,
@@ -187,12 +196,159 @@ export function parseTSDocComment(rawComment, options = {}) {
   };
 }
 
-function parseDeclaration(lines, index) {
-  const line = lines[index];
+/**
+ * @lang zh-CN 记录源码每行的 UTF-16 起点；换行符不计入下一行列数。
+ * @lang en Records each line's UTF-16 starting offset so newline characters do not count toward the next column.
+ * @param {string} sourceText <lang><zh-CN>已统一为 LF 的源码。</zh-CN><en>Source text normalized to LF.</en></lang>
+ * @returns {number[]} <lang><zh-CN>按行排序的零基偏移。</zh-CN><en>Ordered zero-based line offsets.</en></lang>
+ */
+function sourceLineStarts(sourceText) {
+  const starts = [0];
+  for (let offset = 0; offset < sourceText.length; offset += 1) {
+    if (sourceText[offset] === "\n") starts.push(offset + 1);
+  }
+  return starts;
+}
+
+/**
+ * @lang zh-CN 将 UTF-16 绝对偏移转换为零基行列，供范围与注释归属共用。
+ * @lang en Converts an absolute UTF-16 offset to zero-based line and column for ranges and comment ownership.
+ * @param {number[]} lineStarts <lang><zh-CN>各行起始偏移。</zh-CN><en>Line starting offsets.</en></lang>
+ * @param {number} offset <lang><zh-CN>零基 UTF-16 绝对偏移。</zh-CN><en>Zero-based absolute UTF-16 offset.</en></lang>
+ * @returns {{lineIndex:number,columnIndex:number}} <lang><zh-CN>零基行列位置。</zh-CN><en>Zero-based line-column position.</en></lang>
+ */
+function sourceOffsetPosition(lineStarts, offset) {
+  let low = 0;
+  let high = lineStarts.length - 1;
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (lineStarts[middle] <= offset) low = middle;
+    else high = middle - 1;
+  }
+  return { lineIndex: low, columnIndex: offset - lineStarts[low] };
+}
+
+/**
+ * @lang zh-CN 在已支持的词法子集里收集顶层 export 与 TSDoc 块；复杂模板插值和正则语法不宣称完整解析。
+ * @lang en Collects top-level exports and TSDoc blocks in the supported lexical subset without claiming full template-interpolation or regular-expression parsing.
+ * @param {string} sourceText <lang><zh-CN>标准化源码，索引单位是 UTF-16。</zh-CN><en>Normalized source indexed in UTF-16 units.</en></lang>
+ * @returns {{exportOffsets:number[],docComments:{start:number,end:number}[]}} <lang><zh-CN>候选顶层位置和真实文档注释位置。</zh-CN><en>Candidate top-level positions and actual documentation comment positions.</en></lang>
+ */
+function scanTopLevelExports(sourceText) {
+  const exportOffsets = [];
+  const docComments = [];
+  let braceDepth = 0;
+  let parenthesisDepth = 0;
+  let bracketDepth = 0;
+  let quote = null;
+  let escaped = false;
+  let regularExpression = false;
+  let regularExpressionClass = false;
+  let lastCodeCharacter = null;
+  let statementBoundary = true;
+  let blockCommentStart = -1;
+  let lineComment = false;
+
+  // <lang><zh-CN>每个字符只进入一种词法状态；注释和字符串中的伪关键字不会生成符号。</zh-CN><en>Each character belongs to one lexical state; pseudo-keywords in comments and strings cannot create symbols.</en></lang>
+  for (let offset = 0; offset < sourceText.length; offset += 1) {
+    const character = sourceText[offset];
+    const next = sourceText[offset + 1];
+    if (lineComment) {
+      if (character === "\n") {
+        lineComment = false;
+        if (braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0) statementBoundary = true;
+      }
+      continue;
+    }
+    if (blockCommentStart >= 0) {
+      if (character === "*" && next === "/") {
+        if (sourceText[blockCommentStart + 2] === "*") {
+          docComments.push({ start: blockCommentStart, end: offset + 2 });
+        }
+        blockCommentStart = -1;
+        offset += 1;
+      }
+      continue;
+    }
+    // <lang><zh-CN>表达式起点的简单正则字面量也可能含 export 文本；转义与字符类中的斜线不关闭它。</zh-CN><en>A simple expression-position regular expression may also contain export text; escaped or class-contained slashes do not close it.</en></lang>
+    if (regularExpression) {
+      if (character === "\n") {
+        regularExpression = false;
+        regularExpressionClass = false;
+      } else if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === "[") regularExpressionClass = true;
+      else if (character === "]") regularExpressionClass = false;
+      else if (character === "/" && !regularExpressionClass) regularExpression = false;
+      continue;
+    }
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === quote) quote = null;
+      continue;
+    }
+    if (character === "/" && next === "/") {
+      lineComment = true;
+      offset += 1;
+      continue;
+    }
+    if (character === "/" && next === "*") {
+      blockCommentStart = offset;
+      offset += 1;
+      continue;
+    }
+    if (character === "/" && (lastCodeCharacter === null || "=(:,!&|?[".includes(lastCodeCharacter))) {
+      regularExpression = true;
+      regularExpressionClass = false;
+      escaped = false;
+      statementBoundary = false;
+      continue;
+    }
+    if (character === "'" || character === '"' || character === "`") {
+      quote = character;
+      statementBoundary = false;
+      continue;
+    }
+    // <lang><zh-CN>仅语句起点识别顶层 export；表达式内即使出现关键字形状也不得伪造声明。</zh-CN><en>Recognize top-level export only at a statement boundary; keyword-shaped text inside an expression cannot fabricate a declaration.</en></lang>
+    if (statementBoundary && braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0
+      && sourceText.startsWith("export", offset)
+      && !/[\w$]/.test(sourceText[offset - 1] ?? "")
+      && !/[\w$]/.test(sourceText[offset + 6] ?? "")) {
+      exportOffsets.push(offset);
+      statementBoundary = false;
+      lastCodeCharacter = "t";
+      offset += 5;
+      continue;
+    }
+    if (!/\s/.test(character)) lastCodeCharacter = character;
+    if (character === "{") braceDepth += 1;
+    else if (character === "}") braceDepth = Math.max(0, braceDepth - 1);
+    else if (character === "(") parenthesisDepth += 1;
+    else if (character === ")") parenthesisDepth = Math.max(0, parenthesisDepth - 1);
+    else if (character === "[") bracketDepth += 1;
+    else if (character === "]") bracketDepth = Math.max(0, bracketDepth - 1);
+    if (braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0
+      && (character === ";" || character === "}" || character === "\n")) statementBoundary = true;
+    else if (!/\s/.test(character)) statementBoundary = false;
+  }
+  return { exportOffsets, docComments };
+}
+
+/**
+ * @lang zh-CN 从一个已由顶层词法扫描器验证的位置识别当前支持的声明类别。
+ * @lang en Recognizes supported declarations from a position already verified by the top-level lexical scanner.
+ * @param {string[]} lines <lang><zh-CN>换行标准化后的源码行。</zh-CN><en>Source lines with normalized line endings.</en></lang>
+ * @param {number} index <lang><zh-CN>零基起始行。</zh-CN><en>Zero-based starting line.</en></lang>
+ * @param {number} columnIndex <lang><zh-CN>零基 UTF-16 起始列。</zh-CN><en>Zero-based UTF-16 starting column.</en></lang>
+ * @returns {object | null} <lang><zh-CN>当前支持的声明，或未支持时为空。</zh-CN><en>Supported declaration, or null for unsupported syntax.</en></lang>
+ */
+function parseDeclaration(lines, index, columnIndex = 0) {
+  const line = lines[index].slice(columnIndex);
   if (!/^\s*export\b/.test(line)) {
     return null;
   }
-  const declarationHeader = collectDeclarationHeader(lines, index);
+  const declarationHeader = collectDeclarationHeader(lines, index, columnIndex);
   const functionMatch = /^\s*export\s+(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(([\s\S]*?)\)/.exec(declarationHeader);
   if (functionMatch) {
     const parameters = normalizeSignatureText(functionMatch[2]);
@@ -242,7 +398,15 @@ function parseDeclaration(lines, index) {
   return null;
 }
 
-function collectDeclarationHeader(lines, startIndex) {
+/**
+ * @lang zh-CN 从指定 UTF-16 列开始保守收集函数参数头，不把同行前一个声明并入签名。
+ * @lang en Conservatively collects a function parameter header from the given UTF-16 column without including an earlier same-line declaration.
+ * @param {string[]} lines <lang><zh-CN>标准化源码行。</zh-CN><en>Normalized source lines.</en></lang>
+ * @param {number} startIndex <lang><zh-CN>零基起始行。</zh-CN><en>Zero-based starting line.</en></lang>
+ * @param {number} startColumn <lang><zh-CN>零基起始列。</zh-CN><en>Zero-based starting column.</en></lang>
+ * @returns {string} <lang><zh-CN>用于当前保守识别的签名头。</zh-CN><en>Signature header for the current conservative recognition.</en></lang>
+ */
+function collectDeclarationHeader(lines, startIndex, startColumn = 0) {
   const parts = [];
   // 中文：以括号/引号状态收集函数头，避免默认对象参数中的 `{}` 被误判为函数体开始。
   // English: Track parentheses and quotes so object-literal defaults are not mistaken for function bodies.
@@ -252,7 +416,7 @@ function collectDeclarationHeader(lines, startIndex) {
   let escaped = false;
 
   for (let index = startIndex; index < Math.min(lines.length, startIndex + 40); index += 1) {
-    const text = lines[index].trim();
+    const text = (index === startIndex ? lines[index].slice(startColumn) : lines[index]).trim();
     parts.push(text);
 
     for (const character of text) {
@@ -328,11 +492,14 @@ function createSymbol({ declaration, sourcePath, sourceRange }) {
  * @lang en Locates an exclusive end within the current conservative exported-declaration scan; a top-level type semicolon or a closed function/class/interface body terminates it.
  * @param {string[]} lines <lang><zh-CN>已标准化换行的 UTF-16 源码行。</zh-CN><en>UTF-16 source lines with normalized line endings.</en></lang>
  * @param {number} startIndex <lang><zh-CN>导出声明起始的零基行索引。</zh-CN><en>Zero-based line index where the exported declaration starts.</en></lang>
+ * @param {number} startColumn <lang><zh-CN>导出声明起始的零基 UTF-16 列。</zh-CN><en>Zero-based UTF-16 column where the exported declaration starts.</en></lang>
  * @param {{kind:string}} declaration <lang><zh-CN>已识别的保守声明类别。</zh-CN><en>Recognized conservative declaration kind.</en></lang>
+ * @param {{lineIndex:number,columnIndex:number} | null} nextStart <lang><zh-CN>下一个顶层导出的零基位置，即当前扫描上界。</zh-CN><en>Zero-based position of the next top-level export, bounding this scan.</en></lang>
  * @returns {{start:{line:number,column:number},end:{line:number,column:number}}} <lang><zh-CN>一基行列范围，终点排除；复杂模板字面量和未闭合声明仍仅是扫描器估计。</zh-CN><en>One-based line-column range with an exclusive end; complex template literals and unclosed declarations remain scanner estimates.</en></lang>
  */
-function declarationRange(lines, startIndex, declaration) {
+function declarationRange(lines, startIndex, startColumn, declaration, nextStart) {
   let endIndex = startIndex;
+  let endColumn = startColumn + 1;
   // <lang><zh-CN>分别跟踪签名括号与类型/函数体大括号，以免参数默认对象过早结束声明。</zh-CN><en>Track signature parentheses separately from type/body braces so parameter defaults cannot end a declaration early.</en></lang>
   let parenthesisDepth = 0;
   let bracketDepth = 0;
@@ -341,14 +508,13 @@ function declarationRange(lines, startIndex, declaration) {
   let escaped = false;
   let blockComment = false;
   for (let index = startIndex; index < lines.length; index += 1) {
+    if (nextStart && index > nextStart.lineIndex) break;
     const line = lines[index];
-    // <lang><zh-CN>没有显式分号的类型别名只在下一个顶层导出前回退，不能吞入相邻声明。</zh-CN><en>For an alias without a semicolon, stop before the next top-level export rather than swallowing its declaration.</en></lang>
-    if (index > startIndex && parenthesisDepth === 0 && bracketDepth === 0 && braceDepth === 0 && /^\s*export\b/.test(line)) {
-      break;
-    }
-    let closedTopLevelBrace = false;
-    let topLevelSemicolon = false;
-    for (let column = 0; column < line.length; column += 1) {
+    // <lang><zh-CN>同一行的下一个导出也会截断本次扫描，绝不按整行填充第一个声明。</zh-CN><en>The next export truncates scanning even on the same line, so the first declaration never fills the whole line.</en></lang>
+    const limit = nextStart?.lineIndex === index ? nextStart.columnIndex : line.length;
+    const firstColumn = index === startIndex ? startColumn : 0;
+    if (limit <= firstColumn) break;
+    for (let column = firstColumn; column < limit; column += 1) {
       const character = line[column];
       const next = line[column + 1];
       // <lang><zh-CN>字符串和注释中的标点没有声明边界语义。</zh-CN><en>Punctuation inside strings and comments has no declaration-boundary meaning.</en></lang>
@@ -386,46 +552,61 @@ function declarationRange(lines, startIndex, declaration) {
       if (character === "{") braceDepth += 1;
       if (character === "}") {
         braceDepth = Math.max(0, braceDepth - 1);
-        if (braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0) closedTopLevelBrace = true;
+        if (declaration.kind !== TSDOC_SYMBOL_KINDS.typeAlias
+          && braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0) {
+          // <lang><zh-CN>函数返回对象类型后的第二个大括号仍可能是函数体；仅在无后续体时结束。</zh-CN><en>A second brace after an object return type may still start the function body; end only when no following body begins.</en></lang>
+          const following = line.slice(column + 1, limit).trimStart()
+            || lines.slice(index + 1).find((item) => item.trim())?.trimStart()
+            || "";
+          if (!following.startsWith("{")) {
+            return {
+              start: { line: startIndex + 1, column: startColumn + 1 },
+              end: { line: index + 1, column: column + 2 }
+            };
+          }
+        }
       }
-      if (character === ";" && braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0) topLevelSemicolon = true;
+      if (character === ";" && braceDepth === 0 && parenthesisDepth === 0 && bracketDepth === 0) {
+        return {
+          start: { line: startIndex + 1, column: startColumn + 1 },
+          end: { line: index + 1, column: column + 2 }
+        };
+      }
     }
-    // <lang><zh-CN>无分号类型在遇到下个 export 前可能有空行，范围终点留在最后一行内容。</zh-CN><en>An unterminated alias may have blank lines before the next export; keep its end on the last content line.</en></lang>
-    if (line.trim()) endIndex = index;
-    // <lang><zh-CN>类型别名内部的对象成员分号不能终止别名；其顶层分号可以。其它声明以完整体或无体签名结束。</zh-CN><en>Object-member semicolons cannot end a type alias, while its top-level semicolon can; other declarations end at a closed body or bodyless signature.</en></lang>
-    if (topLevelSemicolon || (declaration.kind !== TSDOC_SYMBOL_KINDS.typeAlias && closedTopLevelBrace && braceDepth === 0 && !lines.slice(index + 1).find((item) => item.trim())?.trimStart().startsWith("{"))) {
-      break;
+    // <lang><zh-CN>无终止符的类型别名保留最后一行内容，不把下一个导出的行或列纳入范围。</zh-CN><en>An unterminated alias keeps its last content line without including the next export line or column.</en></lang>
+    if (line.slice(firstColumn, limit).trim()) {
+      endIndex = index;
+      endColumn = limit + 1;
     }
   }
   return {
-    start: { line: startIndex + 1, column: firstNonWhitespaceColumn(lines[startIndex]) },
-    end: { line: endIndex + 1, column: lines[endIndex].length + 1 }
+    start: { line: startIndex + 1, column: startColumn + 1 },
+    end: { line: endIndex + 1, column: endColumn }
   };
 }
 
-function extractAttachedComment(lines, declarationIndex, options) {
-  let cursor = declarationIndex - 1;
-  while (cursor >= 0 && !lines[cursor].trim()) {
-    cursor -= 1;
-  }
-  if (cursor < 0 || !lines[cursor].includes("*/")) {
-    return null;
-  }
-
-  const end = cursor;
-  while (cursor >= 0 && !lines[cursor].includes("/**")) {
-    cursor -= 1;
-  }
-  if (cursor < 0) {
-    return null;
-  }
-
-  const raw = lines.slice(cursor, end + 1).join("\n");
+/**
+ * @lang zh-CN 只把紧邻当前导出的真实 TSDoc 块归属于它，防止同行后项复制前项注释。
+ * @lang en Attaches only the real TSDoc block immediately preceding this export, so a later same-line item cannot inherit the first comment.
+ * @param {string} sourceText <lang><zh-CN>标准化源码。</zh-CN><en>Normalized source.</en></lang>
+ * @param {number[]} lineStarts <lang><zh-CN>UTF-16 行起点。</zh-CN><en>UTF-16 line starts.</en></lang>
+ * @param {{start:number,end:number}[]} docComments <lang><zh-CN>词法扫描器确认的文档块。</zh-CN><en>Document blocks verified by the lexical scanner.</en></lang>
+ * @param {number} declarationOffset <lang><zh-CN>当前导出起始绝对偏移。</zh-CN><en>Absolute offset of the current export.</en></lang>
+ * @param {object} options <lang><zh-CN>本地化解析选项。</zh-CN><en>Localization parse options.</en></lang>
+ * @returns {object | null} <lang><zh-CN>真实附着注释或空值。</zh-CN><en>Actually attached comment or null.</en></lang>
+ */
+function extractAttachedComment(sourceText, lineStarts, docComments, declarationOffset, options) {
+  // <lang><zh-CN>只考察最近的已闭合 TSDoc；中间若有代码或其它注释，则不沿用旧块。</zh-CN><en>Inspect only the nearest closed TSDoc; intervening code or another comment prevents reuse.</en></lang>
+  const candidate = docComments.findLast((item) => item.end <= declarationOffset);
+  if (!candidate || sourceText.slice(candidate.end, declarationOffset).trim()) return null;
+  const raw = sourceText.slice(candidate.start, candidate.end);
+  const start = sourceOffsetPosition(lineStarts, candidate.start);
+  const end = sourceOffsetPosition(lineStarts, candidate.end);
   return {
     raw,
     range: {
-      start: { line: cursor + 1, column: firstNonWhitespaceColumn(lines[cursor]) },
-      end: { line: end + 1, column: lines[end].length + 1 }
+      start: { line: start.lineIndex + 1, column: start.columnIndex + 1 },
+      end: { line: end.lineIndex + 1, column: end.columnIndex + 1 }
     },
     ...parseTSDocComment(raw, options)
   };
