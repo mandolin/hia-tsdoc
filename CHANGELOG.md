@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add explicit project runner/CLI mode and an SDK 1.0 project producer, using the same native extraction core and safe workspace-relative output rules.
+- Add an independently versioned full-field project bridge with exact legacy reading and explicit absence of JavaScript emission; register its actual artifact in direct source maps.
 - Add opt-in native TypeScript project extraction with real exports, aliases, constants, per-declaration overloads, types and public/protected members.
 - Introduce independent `0.2.0-draft` extraction/schema/profile identities and exact legacy/project reading; migration requires actual re-extraction.
 - Preserve full supported comment fields and direct multi-source UTF-16 exclusive ranges in HIA and `doc-source-map@1.1.0` output, without claiming JavaScript emission or ordinary-map evidence.

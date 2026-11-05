@@ -60,3 +60,5 @@ export function normalizeTSDocTag(tag) {
 
 /** @lang zh-CN 新通用项目提取使用独立草案身份，原常量及schema保持。 @lang en Generic-project extraction uses a separate draft identity while original constants and schema stay unchanged. */
 export { TSDOC_PROJECT_EXTRACTION_CONTRACT_VERSION, TSDOC_PROJECT_EXTRACTION_SCHEMA_ID, TSDOC_PROJECT_PROFILE_VERSION, TSDOC_PROJECT_EXTRACTION_JSON_SCHEMA, readTsDocExtraction } from "./project.mjs";
+/** @lang zh-CN 无发射项目桥接采用独立草案身份。 @lang en Non-emitting project bridges use an independent draft identity. */
+export {TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION,TSDOC_PROJECT_BRIDGE_SCHEMA_ID,TSDOC_PROJECT_BRIDGE_JSON_SCHEMA} from "./project-bridge.mjs";

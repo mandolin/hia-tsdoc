@@ -149,6 +149,11 @@ import {extractTsDocProject} from "@hia-doc/ts-doc-extractor/project";
 import {readTsDocExtraction} from "@hia-doc/tsdoc-spec";
 import {tsDocToHiaDocument} from "@hia-doc/ts-doc-adapter";
 import {createTsDocProjectSourceMap} from "@hia-doc/ts-to-js-doc-source-map";
+import {runTsDocProject} from "@hia-doc/tsdoc-runner/project";
+import {tsdocProjectProducer} from "@hia-doc/tsdoc-producer";
+import {readTsJsDocBridgeArtifact} from "@hia-doc/ts-jsdoc-bridge";
+import fs from "node:fs";
+import path from "node:path";
 const artifact=extractTsDocProject({workspaceRoot:process.cwd(),entrypoints:["project-api.ts"]});
 assert.strictEqual(readTsDocExtraction(artifact),artifact);
 assert.equal(artifact.contractVersion,"0.2.0-draft");
@@ -161,12 +166,24 @@ const map=createTsDocProjectSourceMap(artifact);
 assert.equal(map.entries.length,document.symbols.length);
 assert.equal(map.sources[0].path,"project-api.ts");
 assert.deepEqual(map.sourceMaps,[]);
+const request={workspaceRoot:process.cwd(),outputDirectory:path.join(process.cwd(),"dist","project-api"),inputs:[{kind:"typescript-project",paths:["project-api.ts"]}]};
+const result=await runTsDocProject(request);
+assert.equal(result.status,"success");
+assert.equal(result.contractVersion,"1.0.0");
+assert.equal(result.artifacts.length,4);
+const bridge=readTsJsDocBridgeArtifact(JSON.parse(fs.readFileSync(path.join(request.outputDirectory,"project.jsdoc-bridge.json"),"utf8")));
+assert.equal(bridge.contractVersion,"0.2.0-draft");
+assert.equal(bridge.artifact,null);
+assert.equal(tsdocProjectProducer.descriptor.contractVersion,"1.0.0");
+assert.equal((await tsdocProjectProducer.produce(request)).status,"success");
 console.log("Installed native project API passed.");
 `;
   // <lang><zh-CN>探针文件固定在临时消费者，Node直接执行而不通过shell。</zh-CN><en>The probe stays in the temporary consumer and runs directly in Node without a shell.</en></lang>
   const probePath = path.join(consumerDirectory, "project-api-smoke.mjs");
   fs.writeFileSync(probePath, probe);
   run(process.execPath, [probePath], consumerDirectory);
+  // <lang><zh-CN>归档CLI必须实际支持项目开关，不能只在源码API中存在。</zh-CN><en>The installed CLI must actually support project mode, not only the source API.</en></lang>
+  runBinary(resolveConsumerBin("hia-tsdoc"), ["--project","--out-dir","dist/project-cli","project-api.ts"], consumerDirectory);
 }
 
 function assertNoLocalPathLeakage(outputDirectory) {

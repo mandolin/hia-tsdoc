@@ -80,6 +80,8 @@ const COORDINATE_ARTIFACT_LIMIT = 16 * 1024 * 1024;
  * @returns {Promise<object>} Documentation producer result.
  */
 export async function runTsDoc(request, context = {}) {
+  // <lang><zh-CN>只有显式项目输入才选择新内核；旧输入和默认配置继续走原编译路径。</zh-CN><en>Only explicit project inputs select the new core; legacy inputs and default configuration keep their original compilation path.</en></lang>
+  if(Array.isArray(request?.inputs) && request.inputs.some(input=>input?.kind==="typescript-project")) return runTsDocProject(request,context);
   const normalized = normalizeRequest(request);
   // <lang><zh-CN>签发侧载前逐级建立并检查输出根，不能先通过输出符号链接创建工作区外的目录。</zh-CN><en>Build and inspect each strict output-root component before signing; never create external directories through an output symlink.</en></lang>
   if (normalized.options.emitCoordinateProfile) {
@@ -155,6 +157,18 @@ export async function runTsDoc(request, context = {}) {
   });
 
   return result;
+}
+
+/**
+ * @lang zh-CN 显式项目入口延迟加载原生实现，不改变旧调用的编译模式或默认参数。
+ * @lang en Lazily load the native implementation for explicit project input without changing legacy compilation or defaults.
+ * @param {object} request - 标准SDK项目请求。 Standard SDK project request.
+ * @param {object} [context] - 进度及中止上下文。 Progress and abort context.
+ * @returns {Promise<object>} SDK1.0项目结果。 SDK 1.0 project result.
+ */
+export async function runTsDocProject(request,context={}) {
+  const implementation=await import("./project.mjs");
+  return implementation.runTsDocProject(request,context);
 }
 
 /**

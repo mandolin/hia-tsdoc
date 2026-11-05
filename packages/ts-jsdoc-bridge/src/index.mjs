@@ -1,6 +1,20 @@
 import { TSDOC_CLASSIFICATIONS, TSDOC_EXTRACTION_CONTRACT } from "@hia-doc/tsdoc-spec";
+import {tsDocProjectToJsDocBridgeArtifact} from "./project.mjs";
 
+/** @lang zh-CN 两代精确桥接读取及新项目投影。 @lang en Exact two-generation bridge reading and new project projection. */
+export {tsDocProjectToJsDocBridgeArtifact,readTsJsDocBridgeArtifact} from "./project.mjs";
+
+/**
+ * @lang zh-CN 按精确输入版本选择桥接；旧版保持历史JS定位，新项目明确无发射事实。
+ * @lang en Select bridging by exact extraction version; legacy retains historical JS locators while project input explicitly has no emission facts.
+ * @param {object} tsArtifact - 提取对象。 Extraction object.
+ * @param {object} [options] - 旧版JS路径选项，新项目拒绝该选项。 Legacy JS path options, refused by project mode.
+ * @returns {object} 对应版本桥接。 Corresponding bridge version.
+ */
 export function tsDocToJsDocBridgeArtifact(tsArtifact, options = {}) {
+  // <lang><zh-CN>新版不经过旧默认JS路径分支；未知身份必须拒绝。</zh-CN><en>New artifacts bypass the legacy default JS path branch; unknown versions must be refused.</en></lang>
+  if(tsArtifact?.contractVersion==="0.2.0-draft") return tsDocProjectToJsDocBridgeArtifact(tsArtifact,options);
+  if(tsArtifact?.contractVersion!=="0.1.0-draft") throw new Error("Unsupported TypeScript extraction version.");
   assertTsDocArtifact(tsArtifact);
   const jsPath = normalizePath(options.jsPath ?? "dist/output.js");
   const runtimeSymbols = tsArtifact.symbols.filter((symbol) => symbol.classification === TSDOC_CLASSIFICATIONS.runtime);

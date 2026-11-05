@@ -12,6 +12,7 @@ import { readTsDocExtraction } from "@hia-doc/tsdoc-spec";
  * @param {object} [options] - 输出工件相对定位器。 Relative output artifact locators.
  * @param {string} [options.extractionPath="project.tsdoc.json"] - 已写/拟写提取工件。 Written or planned extraction artifact.
  * @param {string} [options.hiaDocumentPath="project.hia.json"] - 对应HIA工件。 Corresponding HIA artifact.
+ * @param {string} [options.jsDocBridgePath] - 仅在确实生成桥接时登记。 Registered only when the bridge is actually generated.
  * @returns {object} doc-source-map1.1.0，不嵌入源码正文。 doc-source-map 1.1.0 without source bodies.
  * @throws {Error} 版本或工件定位不符。 Invalid version or artifact locator.
  */
@@ -20,7 +21,7 @@ export function createTsDocProjectSourceMap(artifact,options={}) {
   if(artifact.contractVersion!=="0.2.0-draft") throw new Error("Project mapping requires project extraction.");
   const extractionPath=options.extractionPath ?? "project.tsdoc.json";
   const hiaDocumentPath=options.hiaDocumentPath ?? "project.hia.json";
-  for(const value of [extractionPath,hiaDocumentPath]) if(typeof value!=="string" || !value || /[\\:%?#\u0000-\u001f\u007f]/.test(value) || value.split("/").some(part=>!part || part==="." || part==="..")) throw new Error("Invalid project artifact path.");
+  for(const value of [extractionPath,hiaDocumentPath,...(options.jsDocBridgePath!==undefined ? [options.jsDocBridgePath] : [])]) if(typeof value!=="string" || !value || /[\\:%?#\u0000-\u001f\u007f]/.test(value) || value.split("/").some(part=>!part || part==="." || part==="..")) throw new Error("Invalid project artifact path.");
   // <lang lang="zh-CN">来源身份仅由已核相对路径生成，公开绑定可共享来源但各自声明身份独立。</lang><lang lang="en">Derive source identities only from validated relative paths; public bindings may share a source while keeping distinct declaration identities.</lang>
   const paths=[...new Set(artifact.symbols.map(symbol=>symbol.source.path))].sort();
   const sourceId=file=>"source:ts:"+createHash("sha256").update(file).digest("hex");
@@ -28,10 +29,10 @@ export function createTsDocProjectSourceMap(artifact,options={}) {
     id:"entry:"+symbol.id,kind:"symbol",symbolId:symbol.id,symbolKind:symbol.kind,classification:symbol.classification,
     sourceRefs:[{sourceId:sourceId(symbol.source.path),range:symbol.source.range,rangeConvention:{endBoundary:"exclusive",columnUnit:"utf16-code-unit"},rangeSource:"compiler",rangeSourceDetail:"typescript-native-ast:declaration",confidence:"high"},
       ...(symbol.comment ? [{sourceId:sourceId(symbol.source.path),range:symbol.comment.range,rangeConvention:{endBoundary:"exclusive",columnUnit:"utf16-code-unit"},rangeSource:"compiler",rangeSourceDetail:"typescript-native-ast:documentation-comment",confidence:"high"}] : [])],
-    artifactRefs:[{artifactId:"artifact:tsdoc:project",rangeSource:"adapter",confidence:"high"},{artifactId:"artifact:hia:project",rangeSource:"adapter",confidence:"high"}],diagnostics:[]
+    artifactRefs:[{artifactId:"artifact:tsdoc:project",rangeSource:"adapter",confidence:"high"},{artifactId:"artifact:hia:project",rangeSource:"adapter",confidence:"high"},...(options.jsDocBridgePath!==undefined ? [{artifactId:"artifact:bridge:project",rangeSource:"adapter",confidence:"high"}] : [])],diagnostics:[]
   }));
   return {contract:"doc-source-map",contractVersion:"1.1.0",id:"docmap:typescript-project",producer:{name:"@hia-doc/ts-to-js-doc-source-map",version:"0.1.3",profile:"ts-jsdoc-bridge"},
-    artifacts:[{id:"artifact:tsdoc:project",kind:"extraction-artifact",path:extractionPath,language:"json",role:"generated",contractRefs:[{contract:"hia-tsdoc-extraction",contractVersion:artifact.contractVersion,path:extractionPath}]},{id:"artifact:hia:project",kind:"hia-document",path:hiaDocumentPath,language:"json",role:"generated"}],
+    artifacts:[{id:"artifact:tsdoc:project",kind:"extraction-artifact",path:extractionPath,language:"json",role:"generated",contractRefs:[{contract:"hia-tsdoc-extraction",contractVersion:artifact.contractVersion,path:extractionPath}]},{id:"artifact:hia:project",kind:"hia-document",path:hiaDocumentPath,language:"json",role:"generated"},...(options.jsDocBridgePath!==undefined ? [{id:"artifact:bridge:project",kind:"bridge-artifact",path:options.jsDocBridgePath,language:"json",role:"generated",contractRefs:[{contract:"hia-ts-jsdoc-bridge",contractVersion:"0.2.0-draft",path:options.jsDocBridgePath}]}] : [])],
     sources:paths.map(file=>({id:sourceId(file),kind:"typescript-source",path:file,language:"typescript",role:"original",sourcesContentPolicy:"none"})),sourceMaps:[],
     chains:paths.map(file=>({id:"chain:"+sourceId(file),stages:[{from:sourceId(file),to:"artifact:hia:project",transform:"typescript-native-ast-to-hia",sourceMap:null,linkage:entries.filter(entry=>entry.sourceRefs[0].sourceId===sourceId(file)).map(entry=>entry.id)}]})),
     entries,diagnostics:[],privacy:{sourcesContentPolicy:"none",allowAbsolutePaths:false,allowUncPaths:false,allowPathTraversal:false,releaseGate:{requireExplicitEmbedOptIn:true,failOnUnsafePath:true,failOnUnexpectedSourcesContent:true}}

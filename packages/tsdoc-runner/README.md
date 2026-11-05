@@ -67,3 +67,31 @@ Only the two explicitly named safe-relative JSON files are read. The optional `-
 safe-relative; without it the packet is written to standard output. This utility never discovers a target
 repository, reads source/artifact/source-map bodies, runs target commands, writes a target repository,
 uses a local link, accesses the network, publishes a package, or declares target adoption.
+## Generic project mode (unreleased)
+
+```sh
+hia-tsdoc --project --out-dir dist/tsdoc-project --default-locale en src/index.ts
+```
+
+This explicit mode resolves a project through the generic native TypeScript API without executing target modules or emitting JavaScript. It writes project extraction and full semantic bridge artifacts (`0.2.0-draft`), an HIA document, a direct `doc-source-map@1.1.0`, and `tsdoc.project-producer-result.json`. The result uses the existing SDK `documentation-producer-result@1.0.0` contract; this does not make the draft domain formats stable.
+
+```js
+import { runTsDocProject } from "@hia-doc/tsdoc-runner";
+import path from "node:path";
+
+const result = await runTsDocProject({
+  workspaceRoot: process.cwd(),
+  outputDirectory: path.resolve("dist/tsdoc-project"),
+  inputs: [{
+    kind: "typescript-project",
+    paths: ["src/index.ts", "src/extra.ts"],
+    artifactBasePath: "api/project",
+    title: "Project API"
+  }],
+  options: { defaultLocale: "en", emitDocSourceMap: true, writeResultManifest: true }
+});
+```
+
+`runTsDoc()` also dispatches explicit `typescript-project` inputs to the same implementation. Project groups cannot mix with legacy `typescript-entry` inputs. Each group uses one shared compiler snapshot for its entry array. `artifactBasePath` defaults to `project` for one group, or `project-1`, `project-2`, etc. Output must be a descendant of the authorized workspace; linked directories, linked/hard-linked existing files and colliding artifact paths are rejected before artifact writes. Static preflight does not guarantee protection against concurrent adversarial path replacement. Individual JSON files may be replaced, and multi-file writes are not transactional. Honor the returned/current result manifest: stale files on disk or files left by failed I/O do not mean this run succeeded. Invalid request/preflight failures leave any previous manifest unchanged.
+
+Project options are limited to `defaultLocale` (default `en`), `emitDocSourceMap` and `writeResultManifest` (both default `true`). Omitting map emission also removes HIA map references. It cannot combine with `--config`, compiler options, source-content embedding or `--coordinate-profile`; those old modes retain their own identities. The current project backend uses isolated ES2022/NodeNext and does not load disk tsconfig, aliases, plugins or transforms. `--project` accepts positional source entries, `--workspace-root`, `--out-dir`, `--default-locale` and `--no-doc-source-map`. A new project config wire has not been introduced. Source text stays excluded, and no ordinary JavaScript map or cross-map coordinate proof is produced. Cancellation is checked between groups and after synchronous extraction; it cannot forcibly stop a native call. Node.js 22 and 24 are verified runtimes.
