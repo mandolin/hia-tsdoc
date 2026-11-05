@@ -133,7 +133,8 @@ test("CLI coordinate-profile flag enables the sidecar from config", async () => 
 
 /** @lang zh-CN 关闭 opt-in 时既有编译内容不变，旧侧载必须撤销。 @lang en Opt-out preserves previous compiler output and revokes a stale sidecar. */
 test("opt-out preserves ordinary output and removes a previous sidecar", async () => {
-  const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "hia-ts-coordinate-test-"));
+  // <lang><zh-CN>此用例验证规范根内撤销；Windows运行器的TEMP可含8.3别名，先固定真实根，避免触发既有保守重定向拒绝。</zh-CN><en>This case verifies revocation under a canonical root; Windows runner TEMP may contain an 8.3 alias, so fix its real root rather than triggering the existing conservative redirect refusal.</en></lang>
+  const temporaryRoot = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "hia-ts-coordinate-test-")));
   try {
     await prepareFixture(temporaryRoot);
     const outputDirectory = path.join(temporaryRoot, "out");
