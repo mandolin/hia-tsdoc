@@ -57,3 +57,6 @@ export function isTSDocTag(tag) {
 export function normalizeTSDocTag(tag) {
   return String(tag).toLowerCase().replace(/^@/, "");
 }
+
+/** @lang zh-CN 新通用项目提取使用独立草案身份，原常量及schema保持。 @lang en Generic-project extraction uses a separate draft identity while original constants and schema stay unchanged. */
+export { TSDOC_PROJECT_EXTRACTION_CONTRACT_VERSION, TSDOC_PROJECT_EXTRACTION_SCHEMA_ID, TSDOC_PROJECT_PROFILE_VERSION, TSDOC_PROJECT_EXTRACTION_JSON_SCHEMA, readTsDocExtraction } from "./project.mjs";

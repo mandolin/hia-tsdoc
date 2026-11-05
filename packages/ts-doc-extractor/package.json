@@ -5,7 +5,8 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/index.mjs"
+    ".": "./src/index.mjs",
+    "./project": "./src/project.mjs"
   },
   "files": [
     "src",
@@ -13,7 +14,8 @@
   ],
   "dependencies": {
     "@hia-doc/tsdoc-spec": "0.1.3",
-    "@microsoft/tsdoc": "0.16.0"
+    "@microsoft/tsdoc": "0.16.0",
+    "typescript": "7.0.2"
   },
   "publishConfig": {
     "access": "public",

@@ -1,4 +1,4 @@
-import { TSDOC_CLASSIFICATIONS, TSDOC_EXTRACTION_CONTRACT } from "@hia-doc/tsdoc-spec";
+import { TSDOC_CLASSIFICATIONS, TSDOC_EXTRACTION_CONTRACT, readTsDocExtraction } from "@hia-doc/tsdoc-spec";
 
 const HIA_CORE_SCHEMA_VERSION = "0.2.0";
 const HIA_SOURCE_MODEL = "hia-source";
@@ -18,7 +18,9 @@ export function tsDocToHiaDocument(tsArtifact, options = {}) {
   const typeOnlySymbols = tsArtifact.symbols.filter((symbol) => symbol.classification === TSDOC_CLASSIFICATIONS.typeOnly);
   const title = options.title ?? "TSDoc Document";
   const defaultLocale = options.defaultLocale ?? tsArtifact.defaultLocale ?? "en";
-  const symbols = runtimeSymbols.map((symbol) => mapRuntimeSymbol(symbol));
+  // <lang lang="zh-CN">新项目格式呈现实际类型和成员；旧版仍精确保留只在metadata呈现类型的行为。</lang><lang lang="en">The project format presents real types and members; legacy artifacts retain metadata-only type behavior.</lang>
+  const visibleSymbols = tsArtifact.contractVersion === "0.2.0-draft" ? tsArtifact.symbols : runtimeSymbols;
+  const symbols = visibleSymbols.map((symbol) => mapRuntimeSymbol(symbol));
 
   return {
     schemaVersion: HIA_CORE_SCHEMA_VERSION,
@@ -31,7 +33,7 @@ export function tsDocToHiaDocument(tsArtifact, options = {}) {
         id: "root",
         kind: "root",
         title,
-        symbolIds: runtimeSymbols.map((symbol) => symbol.id)
+        symbolIds: visibleSymbols.map((symbol) => symbol.id)
       }
     ],
     symbols,
@@ -40,6 +42,7 @@ export function tsDocToHiaDocument(tsArtifact, options = {}) {
       sourceContract: tsArtifact.contract,
       sourceContractVersion: tsArtifact.contractVersion,
       producer: tsArtifact.producer,
+      ...(tsArtifact.contractVersion === "0.2.0-draft" ? { typeScriptProject: { modules: tsArtifact.modules } } : {}),
       typeOnlySymbols: typeOnlySymbols.map((symbol) => ({
         id: symbol.id,
         name: symbol.name,
@@ -61,7 +64,15 @@ export function tsDocToHiaDocument(tsArtifact, options = {}) {
   };
 }
 
+/**
+ * @lang zh-CN 核验两代提取身份，新项目对象额外校验模块和逐声明引用。
+ * @lang en Validate both extraction generations, additionally checking module/declaration references for project objects.
+ * @param {object} artifact - 已解析输入。 Parsed input.
+ * @returns {void} 有效时返回。 Returns when valid.
+ * @throws {Error} 身份、版本或引用无效。 Invalid identity, version or references.
+ */
 export function assertTsDocArtifact(artifact) {
+  readTsDocExtraction(artifact);
   if (!artifact || artifact.contract !== TSDOC_EXTRACTION_CONTRACT) {
     throw new Error(`Expected ${TSDOC_EXTRACTION_CONTRACT} artifact.`);
   }
@@ -70,11 +81,19 @@ export function assertTsDocArtifact(artifact) {
   }
 }
 
+/**
+ * @lang zh-CN 投影真实声明及原注释，项目类型/成员沿用核心词汇，不产生源码访问权限。
+ * @lang en Project actual declarations and comments using core kinds for project types/members without granting source access.
+ * @param {object} symbol - 已验证提取符号。 Validated extraction symbol.
+ * @returns {object} 核心符号。 Core symbol.
+ */
 function mapRuntimeSymbol(symbol) {
+  // <lang><zh-CN>核心对象保留实际来源和类型分类；可见摘要只是完整i18n字段的缓存。</zh-CN><en>The core object retains actual sources and classifications; its visible summary only caches the full i18n fields.</en></lang>
   const mapped = {
     id: symbol.id,
     name: symbol.name,
-    kind: symbol.kind === "ts-runtime-class" ? "class" : "function",
+    kind: ({"ts-runtime-class":"class","ts-runtime-constant":"constant","ts-runtime-variable":"member","ts-interface":"typedef","ts-type-alias":"typedef","ts-property":"member","ts-method":"function","ts-namespace":"module","ts-runtime-enum":"typedef"})[symbol.kind] ?? "function",
+    ...(symbol.parentId ? { parentId: symbol.parentId } : {}),
     signature: symbol.signature,
     summary: symbol.comment?.i18n?.fields?.description?.defaultText ?? symbol.comment?.summary ?? undefined,
     source: {
@@ -102,6 +121,7 @@ function mapRuntimeSymbol(symbol) {
       tsdoc: {
         classification: symbol.classification,
         tsKind: symbol.kind,
+        ...(symbol.metadata?.modulePath ? { modulePath: symbol.metadata.modulePath, syntaxKind: symbol.metadata.syntaxKind } : {}),
         comment: symbol.comment ?? null
       }
     }
@@ -109,6 +129,8 @@ function mapRuntimeSymbol(symbol) {
   if (symbol.comment?.i18n) {
     mapped.i18n = symbol.comment.i18n;
   }
+  // <lang lang="zh-CN">新项目产物直接满足JSON数据约束；无注释时省略未定义缓存字段，旧对象行为保持。</lang><lang lang="en">Project output directly satisfies JSON-data constraints by omitting undefined caches for undocumented declarations; legacy object behavior remains unchanged.</lang>
+  if (symbol.metadata?.modulePath) for (const key of Object.keys(mapped)) if (mapped[key] === undefined) delete mapped[key];
   return mapped;
 }
 

@@ -44,6 +44,8 @@ function main() {
   const tarballs = packageRoots.map(packWorkspacePackage);
   runNpm(["install", "--ignore-scripts", "--no-audit", "--no-fund", ...tarballs], consumerDirectory);
   runBinary(resolveConsumerBin("hia-tsdoc"), ["--config", "tsdoc.config.json"], consumerDirectory);
+  // <lang><zh-CN>真实归档消费者从安装包读取原生项目API，防止只在workspace链接下可用。</zh-CN><en>A real tarball consumer loads the native project API from installed packages, preventing workspace-link-only success.</en></lang>
+  checkProjectApi();
   /** Handoff evidence stays synthetic metadata and is copied only into the temporary HIA-owned consumer. / handoff evidence 保持 synthetic metadata，只复制到临时 HIA-owned consumer。 */
   const consumerHandoffEvidencePath = path.join(consumerDirectory, "handoff-evidence.json");
   fs.copyFileSync(handoffFixturePath, consumerHandoffEvidencePath);
@@ -102,20 +104,8 @@ function runNpm(args, cwd) {
 }
 
 function runBinary(commandPath, args, cwd) {
-  if (process.platform === "win32") {
-    const commandLine = [quoteCmd(commandPath), ...args.map(quoteCmd)].join(" ");
-    const result = spawnSync(commandLine, {
-      cwd,
-      encoding: "utf8",
-      shell: true
-    });
-    if (result.error || result.status !== 0) {
-      process.stderr.write(result.error?.message || result.stderr || result.stdout || `${commandLine} failed.\n`);
-      process.exit(1);
-    }
-    return result;
-  }
-  return run(commandPath, args, cwd);
+  // <lang><zh-CN>直接用当前Node执行已核包入口，避免Windows命令包装器及shell解释参数。</zh-CN><en>Run the verified package entry with the current Node, avoiding Windows command wrappers and shell argument interpretation.</en></lang>
+  return run(process.execPath, [commandPath, ...args], cwd);
 }
 
 function run(command, args, cwd) {
@@ -131,12 +121,52 @@ function run(command, args, cwd) {
 }
 
 function resolveConsumerBin(name) {
-  const extension = process.platform === "win32" ? ".cmd" : "";
-  const binPath = path.join(consumerDirectory, "node_modules", ".bin", `${name}${extension}`);
+  // <lang><zh-CN>读取实际归档包的bin映射；只有预期脚本位于该包内时才执行。</zh-CN><en>Read the installed tarball's bin mapping and execute only the expected in-package script.</en></lang>
+  const packageRoot = path.join(consumerDirectory, "node_modules", "@hia-doc", "tsdoc-runner");
+  const packageJson = readJson(path.join(packageRoot, "package.json"));
+  const entry = packageJson.bin?.[name];
+  if (typeof entry !== "string" || !/^src\/[a-z-]+\.mjs$/.test(entry)) fail("Invalid installed CLI entry.");
+  const binPath = path.join(packageRoot, entry);
   if (!fs.existsSync(binPath)) {
     fail(`Missing target consumer bin: ${name}`);
   }
   return binPath;
+}
+
+/**
+ * @lang zh-CN 在独立安装目录验证项目提取/两代读取/HIA/直接地图；只写本脚本创建的临时消费者。
+ * @lang en Verify project extraction, versioned reading, HIA and direct maps in an independently installed consumer, writing only its owned temporary directory.
+ * @returns {void} 成功返回，失败终止。 Returns on success and terminates on failure.
+ */
+function checkProjectApi() {
+  // <lang><zh-CN>输入包含运行即抛出的语句，静态抽取必须仍成功且不执行它。</zh-CN><en>The input throws if evaluated; static extraction must succeed without executing it.</en></lang>
+  fs.writeFileSync(path.join(consumerDirectory, "project-api.ts"), 'throw new Error("must not execute"); export const VALUE=3; export interface Item { id:string; }');
+  // <lang><zh-CN>导入只能经消费者node_modules解析；断言真实类型与成员、范围和无JS事实。</zh-CN><en>Imports must resolve through the consumer node_modules; assert real types/members, ranges and absence of JS emission facts.</en></lang>
+  const probe = `
+/** @lang zh-CN 独立归档API冒烟。 @lang en Installed tarball API smoke. */
+import assert from "node:assert/strict";
+import {extractTsDocProject} from "@hia-doc/ts-doc-extractor/project";
+import {readTsDocExtraction} from "@hia-doc/tsdoc-spec";
+import {tsDocToHiaDocument} from "@hia-doc/ts-doc-adapter";
+import {createTsDocProjectSourceMap} from "@hia-doc/ts-to-js-doc-source-map";
+const artifact=extractTsDocProject({workspaceRoot:process.cwd(),entrypoints:["project-api.ts"]});
+assert.strictEqual(readTsDocExtraction(artifact),artifact);
+assert.equal(artifact.contractVersion,"0.2.0-draft");
+assert.equal(artifact.diagnostics.filter(item=>item.severity==="error").length,0);
+const document=tsDocToHiaDocument(artifact);
+assert(document.symbols.some(item=>item.name==="VALUE"));
+assert(document.symbols.some(item=>item.name==="Item"));
+assert(document.symbols.some(item=>item.name==="id" && item.parentId));
+const map=createTsDocProjectSourceMap(artifact);
+assert.equal(map.entries.length,document.symbols.length);
+assert.equal(map.sources[0].path,"project-api.ts");
+assert.deepEqual(map.sourceMaps,[]);
+console.log("Installed native project API passed.");
+`;
+  // <lang><zh-CN>探针文件固定在临时消费者，Node直接执行而不通过shell。</zh-CN><en>The probe stays in the temporary consumer and runs directly in Node without a shell.</en></lang>
+  const probePath = path.join(consumerDirectory, "project-api-smoke.mjs");
+  fs.writeFileSync(probePath, probe);
+  run(process.execPath, [probePath], consumerDirectory);
 }
 
 function assertNoLocalPathLeakage(outputDirectory) {
@@ -192,10 +222,6 @@ function listFiles(directory) {
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
-}
-
-function quoteCmd(value) {
-  return `"${String(value).replaceAll('"', '\\"')}"`;
 }
 
 function fail(message) {

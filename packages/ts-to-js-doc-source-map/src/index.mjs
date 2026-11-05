@@ -1,5 +1,8 @@
 import { TSDOC_CLASSIFICATIONS, TSDOC_EXTRACTION_CONTRACT } from "@hia-doc/tsdoc-spec";
 
+/** @lang zh-CN 新项目提取使用独立的直接AST→HIA映射，不改变旧JS生成链。 @lang en Project extraction uses a separate direct AST-to-HIA mapper, preserving the legacy JS emission chain. */
+export { createTsDocProjectSourceMap } from "./project.mjs";
+
 /** @lang zh-CN 本写入器当前输出的文档源码映射契约身份。 @lang en Contract identity currently emitted by this documentation source-map writer. */
 export const TS_JS_DOC_SOURCE_MAP_CONTRACT_VERSION = "1.1.0";
 

@@ -16,6 +16,8 @@ This repository is an umbrella monorepo for TypeScript/TSDoc documentation speci
 
 ## Status
 
+An unreleased opt-in [generic project extraction API](packages/ts-doc-extractor/README.md#project-extraction-unreleased-draft) now uses the pinned TypeScript 7 native compiler to resolve exports, constants, overload declarations, types and members. Its independent `0.2.0-draft` artifacts project into HIA and direct multi-source documentation maps. The existing single-file runner/CLI and JavaScript bridge retain the behavior described below; they do not yet select the project API. This candidate has not been published to npm.
+
 This workspace now includes the first TypeScript -> JavaScript generated-source fixture. The P1 path uses the TypeScript compiler CLI, the official TSDoc parser and a conservative scanner for exported declaration locations:
 
 - TypeScript source is compiled to JavaScript and an ordinary source map.

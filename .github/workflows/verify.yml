@@ -1,0 +1,33 @@
+name: Verify TSDoc packages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Node ${{ matrix.node }} on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Use PowerShell 7 for Windows package scripts
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: '"npm_config_script_shell=$((Get-Command pwsh).Source)" >> $env:GITHUB_ENV'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify legacy and project extraction, packages and installed consumer
+        run: npm run release:gate

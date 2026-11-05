@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in native TypeScript project extraction with real exports, aliases, constants, per-declaration overloads, types and public/protected members.
+- Introduce independent `0.2.0-draft` extraction/schema/profile identities and exact legacy/project reading; migration requires actual re-extraction.
+- Preserve full supported comment fields and direct multi-source UTF-16 exclusive ranges in HIA and `doc-source-map@1.1.0` output, without claiming JavaScript emission or ordinary-map evidence.
+- Declare the extractor's existing pinned TypeScript 7.0.2 runtime dependency; keep the original scanner/CLI behavior.
+
 ## 0.1.3
 
 - Add canonical `@lang` block support and inline `<lang>` / `<l>` locale segments for TypeScript/TSDoc descriptions.
