@@ -52,3 +52,7 @@ Pass contractVersion: '0.3.0-draft' to extractTsDocProject() to preserve anonymo
 Explicit project version 0.4.0-draft adds type applications, array elements and readonly operands to the existing structural tree. Generic target names are lexical source references, with source-ordered argument indices. The producer preserves syntax without evaluating utility types or inferring builtin identities. Select contractVersion in extractTsDocProject(), options.extractionVersion in the runner/producer, or --extraction-version in project CLI mode. Extraction and bridge use 0.4, HIA core stays 0.2.0, and direct maps stay 1.1.0. Earlier versions retain exact reading and their original default/rejection boundaries. Unsupported wrappers concealing members still fail.
 
 中文说明。0.4保留泛型目标与实参、数组元素及readonly操作数，具名引用不按字符串认定内建含义。结构节点只有来源事实，物理成员保留双语。显式重新提取授权源码后迁移，旧0.3包装拒绝与0.2默认保持。
+
+For 0.4, inferred signatures read the pinned compiler's same-version platform library directory. The platform package name and version must match the compiler's optional dependency. This keeps source and installed runs consistent. Earlier identities retain their original read boundaries and inference.
+
+中文说明。0.4按实际编译器依赖定位并核验同版本平台标准库，确保源码运行与归档安装的推导签名一致。其它外部声明仍遵循既有授权根。

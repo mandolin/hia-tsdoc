@@ -113,7 +113,7 @@ function signatureFor(node,checker) {
  * @param {string} request.workspaceRoot - 允许读取源码的目录。 Authorized source root.
  * @param {string[]} request.entrypoints - 相对模块入口，最多1000个。 Relative module entries, at most 1000.
  * @param {string} [request.defaultLocale="en"] - 原注释默认语言，不产生翻译。 Original comment locale, without translation generation.
- * @param {string} [request.contractVersion="0.2.0-draft"] <lang><zh-CN>精确项目身份，0.3显式生成类型表达式。</zh-CN><en>Exact project identity, explicitly selecting type expressions with 0.3.</en></lang>
+ * @param {string} [request.contractVersion="0.2.0-draft"] <lang><zh-CN>精确项目身份，0.3生成结构树，0.4另含泛型/数组包装及固定平台标准库。</zh-CN><en>Exact project identity, with structural trees in 0.3 and generic/array wrappers plus pinned platform libraries in 0.4.</en></lang>
  * @returns {object} 独立0.2.0-draft提取工件；未解析绑定保留error诊断。 Independent 0.2.0-draft extraction, retaining errors for unresolved bindings.
  * @throws {Error} 路径、输入数量、文件或编译器处理失败；固定诊断不回显本机路径。 Invalid paths, counts, files, or compiler processing, without machine-path disclosure.
  */
@@ -136,13 +136,27 @@ export function extractTsDocProject(request) {
   if(typeof locale!=="string" || !/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(locale)) throw new Error("Invalid TypeScript project locale.");
   // <lang lang="zh-CN">虚拟项目配置避免扫描磁盘tsconfig；仅工作区源码及编译器自带库可读。</lang><lang lang="en">A virtual project config avoids ambient tsconfig discovery; only workspace sources and compiler libraries are readable.</lang>
   const compilerRoot=fs.realpathSync(path.dirname(createRequire(import.meta.url).resolve("typescript/package.json")));
+  // <lang><zh-CN>原生编译器标准声明在同版本的平台可选包中。0.4仅增加这份固定库目录，旧身份保留原读取边界及推导行为。</zh-CN><en>Native compiler declarations live in the same-version optional platform package. Only 0.4 adds this pinned library directory, preserving legacy read boundaries and inference.</en></lang>
+  let compilerLibraryRoot;
+  if (wrapped) {
+    // <lang><zh-CN>从实际编译器的依赖上下文定位，不从目标项目或环境变量选择另一编译器。</zh-CN><en>Resolve in the actual compiler dependency context rather than selecting another compiler through the target or environment.</en></lang>
+    const compilerManifestPath = path.join(compilerRoot, "package.json");
+    const compilerManifest = JSON.parse(fs.readFileSync(compilerManifestPath, "utf8"));
+    const platformPackage = `@typescript/typescript-${process.platform}-${process.arch}`;
+    const platformManifestPath = createRequire(compilerManifestPath).resolve(`${platformPackage}/package.json`);
+    const platformManifest = JSON.parse(fs.readFileSync(platformManifestPath, "utf8"));
+    if (platformManifest.name !== platformPackage || platformManifest.version !== compilerManifest.version || compilerManifest.optionalDependencies?.[platformPackage] !== platformManifest.version) {
+      throw new Error("Invalid pinned TypeScript platform library.");
+    }
+    compilerLibraryRoot = fs.realpathSync(path.join(path.dirname(platformManifestPath), "lib"));
+  }
   const config=path.join(root,".hia-tsdoc-project.virtual.json");
   const configText=JSON.stringify({compilerOptions:{target:"ES2022",module:"NodeNext",moduleResolution:"NodeNext",noEmit:true,skipLibCheck:true},files:entries});
   // <lang lang="zh-CN">原生客户端跨平台使用正斜杠，先按本机路径语义比较虚拟配置身份。</lang><lang lang="en">The native client uses forward slashes across platforms; compare virtual-config identity using host path semantics.</lang>
   const isConfig=file=>path.relative(config,path.resolve(file))==="";
   // <lang><zh-CN>每次读前解析真实路径，同时允许固定编译器自带lib；其它外部声明不可读取。</zh-CN><en>Resolve physical paths before reads, allowing the pinned compiler's own lib files but no other external declarations.</en></lang>
   const allowed=file=>{
-    try {const physical=fs.realpathSync(file);return inside(root,physical) || inside(compilerRoot,physical);} catch {return false;}
+    try {const physical=fs.realpathSync(file);return inside(root,physical) || inside(compilerRoot,physical) || wrapped && inside(compilerLibraryRoot,physical);} catch {return false;}
   };
   // <lang><zh-CN>只读文件系统限制单文件大小并严格解码UTF-8；虚拟配置仅存在内存中。</zh-CN><en>The read-only filesystem bounds individual files and strictly decodes UTF-8; virtual configuration exists only in memory.</en></lang>
   const filesystem={

@@ -104,3 +104,10 @@ test("0.4 CLI selects the wrapper model and wrapper nodes count toward the node 
     const large = fixture('export type Budget = ' + Array(10000).fill('Array<string>').join('|') + ';');
     assert.throws(() => extractTsDocProject({ workspaceRoot: large, entrypoints: ["index.ts"], contractVersion: "0.4.0-draft" }), /extraction failed/);
 });
+
+test("0.4 resolves the pinned platform compiler libraries for inferred array signatures", () => {
+    const root = fixture('export const Schema = { required: ["contract", "version"] };');
+    const data = extractTsDocProject({workspaceRoot:root,entrypoints:["index.ts"],contractVersion:"0.4.0-draft"});
+    assert.deepEqual(data.diagnostics,[]);
+    assert.match(data.symbols.find(node => node.name === "Schema").signature,/required: string\[\]/);
+});
