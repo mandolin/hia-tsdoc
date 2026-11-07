@@ -39,3 +39,8 @@
 - Add the standalone TSDoc runner, CLI, producer adapter and standalone example.
 - Add the target-project consumer smoke, `hia-tsdoc` CLI binary and packaged install validation.
 - Add readonly target-project pilot support and prepare the first public `@hia-doc/tsdoc-*` package release.
+
+### Generic and array wrapper draft
+
+- Add explicit extraction/bridge 0.4.0-draft for generic applications, array elements and readonly operands, with lexical targets and ordered arguments. Retain old 0.3 wrapper refusals and default 0.2 output.
+- 中文说明。新增包装语法树、对应reader与schema，以及runner/CLI/生产/地图协调。

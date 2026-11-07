@@ -9,7 +9,7 @@ import { createRequire } from "node:module";
 import { API, SymbolFlags } from "typescript/unstable/sync";
 import { SyntaxKind } from "typescript/unstable/ast";
 import { parseTSDocComment } from "./index.mjs";
-import {TSDOC_STRUCTURED_PROJECT_VERSION,TSDOC_TYPE_EXPRESSION_KINDS} from "@hia-doc/tsdoc-spec";
+import {TSDOC_STRUCTURED_PROJECT_VERSION,TSDOC_TYPE_EXPRESSION_KINDS,TSDOC_WRAPPED_PROJECT_VERSION,TSDOC_WRAPPED_TYPE_EXPRESSION_KINDS} from "@hia-doc/tsdoc-spec";
 
 /**
  * @lang zh-CN 核验并标准化显式工作区内的相对路径，绝不展开点段或编码。
@@ -120,8 +120,10 @@ function signatureFor(node,checker) {
 export function extractTsDocProject(request) {
   // <lang><zh-CN>调用方必须精确选择新模式，省略保留原项目工件及树形。</zh-CN><en>Callers select the new mode exactly; omission retains original project artifacts and trees.</en></lang>
   const version=request?.contractVersion===undefined ? "0.2.0-draft" : request.contractVersion;
-  if(!["0.2.0-draft",TSDOC_STRUCTURED_PROJECT_VERSION].includes(version)) throw new Error("Unsupported TypeScript project version.");
-  const structured=version===TSDOC_STRUCTURED_PROJECT_VERSION;
+  if(!["0.2.0-draft",TSDOC_STRUCTURED_PROJECT_VERSION,TSDOC_WRAPPED_PROJECT_VERSION].includes(version)) throw new Error("Unsupported TypeScript project version.");
+  const wrapped=version===TSDOC_WRAPPED_PROJECT_VERSION;
+  const structured=version===TSDOC_STRUCTURED_PROJECT_VERSION || wrapped;
+  const expressionKinds=wrapped ? TSDOC_WRAPPED_TYPE_EXPRESSION_KINDS : TSDOC_TYPE_EXPRESSION_KINDS;
   // <lang lang="zh-CN">错误只返回固定公开说明；真实根仅供本次编译器读取边界使用。</lang><lang lang="en">Return fixed public errors; the real root serves only this compiler read boundary.</lang>
   let root;
   try {root=fs.realpathSync(request?.workspaceRoot);} catch {throw new Error("Invalid TypeScript project root.");}
@@ -228,7 +230,8 @@ export function extractTsDocProject(request) {
      */
     function isStructuredType(node) {
       while(node.kind===SyntaxKind.ParenthesizedType) node=node.type;
-      return [SyntaxKind.TypeLiteral,SyntaxKind.UnionType,SyntaxKind.IntersectionType].includes(node.kind);
+      return [SyntaxKind.TypeLiteral,SyntaxKind.UnionType,SyntaxKind.IntersectionType].includes(node.kind)
+        || wrapped && (node.kind===SyntaxKind.ArrayType || node.kind===SyntaxKind.TypeReference&&node.typeArguments?.length>0 || node.kind===SyntaxKind.TypeOperator&&node.operator===SyntaxKind.ReadonlyKeyword);
     }
     /**
      * @lang zh-CN 不透明类型下若有可文档化成员便拒绝，避免数组或函数包装隐藏源码节点。
@@ -247,15 +250,21 @@ export function extractTsDocProject(request) {
      * @param {string} modulePath <lang><zh-CN>公开入口。</zh-CN><en>Public entry.</en></lang>
      * @param {string} parentId <lang><zh-CN>已生成父项。</zh-CN><en>Emitted parent.</en></lang>
      * @param {number} [branchIndex] <lang><zh-CN>联合或交叉的零基分支。</zh-CN><en>Zero-based union/intersection branch.</en></lang>
+     * @param {number} [argumentIndex] <lang><zh-CN>泛型应用的零基实参。</zh-CN><en>Zero-based generic application argument.</en></lang>
      * @returns {void} <lang><zh-CN>追加实际结构节点及成员。</zh-CN><en>Appends actual structure and member nodes.</en></lang>
      */
-    function addTypeExpression(node,modulePath,parentId,branchIndex) {
+    function addTypeExpression(node,modulePath,parentId,branchIndex,argumentIndex) {
       // <lang><zh-CN>括号保留在父签名内，表达式自身使用内层节点的精确范围。</zh-CN><en>Parent signatures retain parentheses while expressions use precise inner-node ranges.</en></lang>
       while(node.kind===SyntaxKind.ParenthesizedType) node=node.type;
       const source=node.getSourceFile();
       const sourcePath=path.relative(root,source.fileName).split(path.sep).join("/");
       const syntax=SyntaxKind[node.kind];
-      const operator=({TypeLiteral:"object",UnionType:"union",IntersectionType:"intersection"})[syntax] ?? "opaque";
+      let operator=({TypeLiteral:"object",UnionType:"union",IntersectionType:"intersection"})[syntax] ?? "opaque";
+      if(wrapped) {
+        if(node.kind===SyntaxKind.TypeReference&&node.typeArguments?.length) operator="application";
+        if(node.kind===SyntaxKind.ArrayType) operator="array";
+        if(node.kind===SyntaxKind.TypeOperator&&node.operator===SyntaxKind.ReadonlyKeyword) operator="type-operator";
+      }
       if(operator==="opaque" && hasTypeMembers(node)) {
         diagnostics.push({code:"TSDOC_TYPE_EXPRESSION_UNSUPPORTED",severity:"error",message:"Type expression contains unsupported anonymous members.",path:sourcePath});
         return;
@@ -263,9 +272,9 @@ export function extractTsDocProject(request) {
       // <lang><zh-CN>身份区分结构角色及父项，重复分支名和多公开别名不会覆盖；派生节点计入原总预算。</zh-CN><en>Identities distinguish roles and parents so repeated names and public aliases cannot collide; derived nodes count against the original total budget.</en></lang>
       const id="ast:"+createHash("sha256").update(JSON.stringify(["type-expression",modulePath,sourcePath,node.getStart(source),node.end,parentId])).digest("hex");
       symbols.push({
-        id,name:operator==="opaque" ? "type" : operator,kind:TSDOC_TYPE_EXPRESSION_KINDS[operator],classification:"type-only",exported:false,parentId,
+        id,name:operator==="opaque" ? "type" : operator==="type-operator" ? "readonly" : operator,kind:expressionKinds[operator],classification:"type-only",exported:false,parentId,
         signature:node.getText(),source:{path:sourcePath,range:nodeRange(node),rangeSource:"typescript-ast",rangeConvention:{endBoundary:"exclusive",columnUnit:"utf16-code-unit"},confidence:"high"},
-        metadata:{syntaxKind:syntax,modulePath,typeExpression:{operator,syntaxKind:syntax,...(branchIndex!==undefined ? {branchIndex} : {})}},
+        metadata:{syntaxKind:syntax,modulePath,typeExpression:{operator,syntaxKind:syntax,...(branchIndex!==undefined ? {branchIndex} : {}),...(argumentIndex!==undefined ? {argumentIndex} : {}),...(operator==="application" ? {targetName:node.typeName.getText()} : {}),...(operator==="type-operator" ? {typeOperator:"readonly"} : {})}},
         runtime:{emitted:false,emitStatus:"unverified"}
       });
       if(symbols.length>20000) throw new Error();
@@ -273,6 +282,10 @@ export function extractTsDocProject(request) {
         for(const member of node.members) addDeclaration(member,member.name?.getText() ?? SyntaxKind[member.kind],modulePath,id,true);
       } else if(operator==="union" || operator==="intersection") {
         for(const [index,branch] of node.types.entries()) addTypeExpression(branch,modulePath,id,index);
+      } else if(operator==="application") {
+        for(const [index,argument] of node.typeArguments.entries()) addTypeExpression(argument,modulePath,id,undefined,index);
+      } else if(operator==="array" || operator==="type-operator") {
+        addTypeExpression(operator==="array" ? node.elementType : node.type,modulePath,id);
       }
     }
     for(const entry of entries) {

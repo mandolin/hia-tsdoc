@@ -101,3 +101,9 @@ Project options are limited to `defaultLocale` (default `en`), `emitDocSourceMap
 For runTsDocProject() or the project producer, set options.extractionVersion to '0.3.0-draft'. CLI equivalent is --project --extraction-version 0.3.0-draft. Omission retains the original 0.2 project format. The new extraction and bridge are coordinated at 0.3, with HIA core 0.2.0 and direct documentation source map 1.1.0. Unsupported versions and opaque anonymous-member inputs fail explicitly. Re-run against authorized original sources to migrate.
 
 中文说明。显式开关协调四工件，不改旧默认，失败组不登记成功工件。已有文件不是本轮成功的证明。
+
+## Generic and array wrappers
+
+Explicit project version 0.4.0-draft adds type applications, array elements and readonly operands to the existing structural tree. Generic target names are lexical source references, with source-ordered argument indices. The producer preserves syntax without evaluating utility types or inferring builtin identities. Select contractVersion in extractTsDocProject(), options.extractionVersion in the runner/producer, or --extraction-version in project CLI mode. Extraction and bridge use 0.4, HIA core stays 0.2.0, and direct maps stay 1.1.0. Earlier versions retain exact reading and their original default/rejection boundaries. Unsupported wrappers concealing members still fail.
+
+中文说明。0.4保留泛型目标与实参、数组元素及readonly操作数，具名引用不按字符串认定内建含义。结构节点只有来源事实，物理成员保留双语。显式重新提取授权源码后迁移，旧0.3包装拒绝与0.2默认保持。

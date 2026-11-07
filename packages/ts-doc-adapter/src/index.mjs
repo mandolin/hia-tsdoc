@@ -19,7 +19,7 @@ export function tsDocToHiaDocument(tsArtifact, options = {}) {
   const title = options.title ?? "TSDoc Document";
   const defaultLocale = options.defaultLocale ?? tsArtifact.defaultLocale ?? "en";
   // <lang lang="zh-CN">新项目格式呈现实际类型和成员；旧版仍精确保留只在metadata呈现类型的行为。</lang><lang lang="en">The project format presents real types and members; legacy artifacts retain metadata-only type behavior.</lang>
-  const project = ["0.2.0-draft","0.3.0-draft"].includes(tsArtifact.contractVersion);
+  const project = ["0.2.0-draft","0.3.0-draft","0.4.0-draft"].includes(tsArtifact.contractVersion);
   const visibleSymbols = project ? tsArtifact.symbols : runtimeSymbols;
   const symbols = visibleSymbols.map((symbol) => mapRuntimeSymbol(symbol));
 
@@ -93,7 +93,7 @@ function mapRuntimeSymbol(symbol) {
   const mapped = {
     id: symbol.id,
     name: symbol.name,
-    kind: ({"ts-runtime-class":"class","ts-runtime-constant":"constant","ts-runtime-variable":"member","ts-interface":"typedef","ts-type-alias":"typedef","ts-property":"member","ts-method":"function","ts-namespace":"module","ts-runtime-enum":"typedef","ts-type-literal":"typedef","ts-union-type":"typedef","ts-intersection-type":"typedef","ts-type-expression":"typedef"})[symbol.kind] ?? "function",
+    kind: ({"ts-runtime-class":"class","ts-runtime-constant":"constant","ts-runtime-variable":"member","ts-interface":"typedef","ts-type-alias":"typedef","ts-property":"member","ts-method":"function","ts-namespace":"module","ts-runtime-enum":"typedef","ts-type-literal":"typedef","ts-union-type":"typedef","ts-intersection-type":"typedef","ts-type-expression":"typedef","ts-type-application":"typedef","ts-array-type":"typedef","ts-type-operator":"typedef"})[symbol.kind] ?? "function",
     ...(symbol.parentId ? { parentId: symbol.parentId } : {}),
     signature: symbol.signature,
     summary: symbol.comment?.i18n?.fields?.description?.defaultText ?? symbol.comment?.summary ?? undefined,

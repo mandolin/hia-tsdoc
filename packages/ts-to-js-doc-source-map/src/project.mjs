@@ -18,7 +18,7 @@ import { readTsDocExtraction } from "@hia-doc/tsdoc-spec";
  */
 export function createTsDocProjectSourceMap(artifact,options={}) {
   readTsDocExtraction(artifact);
-  if(!["0.2.0-draft","0.3.0-draft"].includes(artifact.contractVersion)) throw new Error("Project mapping requires project extraction.");
+  if(!["0.2.0-draft","0.3.0-draft","0.4.0-draft"].includes(artifact.contractVersion)) throw new Error("Project mapping requires project extraction.");
   const extractionPath=options.extractionPath ?? "project.tsdoc.json";
   const hiaDocumentPath=options.hiaDocumentPath ?? "project.hia.json";
   for(const value of [extractionPath,hiaDocumentPath,...(options.jsDocBridgePath!==undefined ? [options.jsDocBridgePath] : [])]) if(typeof value!=="string" || !value || /[\\:%?#\u0000-\u001f\u007f]/.test(value) || value.split("/").some(part=>!part || part==="." || part==="..")) throw new Error("Invalid project artifact path.");

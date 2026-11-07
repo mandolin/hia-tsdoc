@@ -37,7 +37,7 @@ const { values, positionals } = parseArgs({
 });
 
 if (values.help) {
-  process.stdout.write("Project mode: hia-tsdoc --project [--extraction-version 0.3.0-draft] [--default-locale en] [--no-doc-source-map] --out-dir dist/tsdoc-project <entry.ts...>\nProject mode defaults to 0.2.0-draft and uses direct source linkage without JavaScript emission; legacy --config/compiler/coordinate options cannot be combined.\n\n");
+  process.stdout.write("Project mode: hia-tsdoc --project [--extraction-version 0.4.0-draft] [--default-locale en] [--no-doc-source-map] --out-dir dist/tsdoc-project <entry.ts...>\nProject mode defaults to 0.2.0-draft and uses direct source linkage without JavaScript emission; legacy --config/compiler/coordinate options cannot be combined.\n\n");
   process.stdout.write(`HIA TSDoc ${TSDOC_RUNNER_VERSION}\n\nUsage:\n  hia-tsdoc --config tsdoc.config.json\n  hia-tsdoc [options] <entry.ts...>\n\nOptions:\n  -c, --config <path>\n  -o, --out-dir <path>\n      --workspace-root <path>\n      --target <name>\n      --module <name>\n      --module-resolution <name>\n      --lib <name[,name...]>\n      --types <name[,name...]>\n      --sources-content-policy <none|reference|embed>\n      --no-doc-source-map\n      --coordinate-profile\n      --no-skip-lib-check\n  -v, --version\n`);
   process.exit(0);
 }

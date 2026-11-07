@@ -56,7 +56,7 @@ async function normalize(request) {
   const options=request.options ?? {};
   record(options,["defaultLocale","emitDocSourceMap","writeResultManifest","extractionVersion"]);
   // <lang><zh-CN>新表达式模型必须精确选择，未声明仍使用0.2项目链。</zh-CN><en>The expression model requires exact selection; omission retains the 0.2 project chain.</en></lang>
-  if(options.extractionVersion!==undefined && !["0.2.0-draft","0.3.0-draft"].includes(options.extractionVersion)) throw new Error("Unsupported project extraction version.");
+  if(options.extractionVersion!==undefined && !["0.2.0-draft","0.3.0-draft","0.4.0-draft"].includes(options.extractionVersion)) throw new Error("Unsupported project extraction version.");
   if(options.defaultLocale!==undefined && (typeof options.defaultLocale!=="string" || !/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(options.defaultLocale))) throw new Error("Invalid project locale.");
   for(const key of ["emitDocSourceMap","writeResultManifest"]) if(options[key]!==undefined && typeof options[key]!=="boolean") throw new Error("Invalid project boolean option.");
   const profileIds=request.profileIds ?? ["tsdoc"];

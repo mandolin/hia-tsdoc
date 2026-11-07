@@ -46,3 +46,9 @@ The runner now exposes `runTsDocProject()` and explicit `hia-tsdoc --project` se
 Pass contractVersion: '0.3.0-draft' to extractTsDocProject() to preserve anonymous objects, unions and intersections in type aliases and properties. Parenthesized types are transparent. Every direct branch has a zero-based source-order index and a representative node, including opaque leaves. Structural nodes retain actual signatures/ranges and have no invented comments. Physical members retain their own comments and sources. Opaque wrappers hiding anonymous members produce an error. Function return shapes keep their existing signature projection. All structural nodes count toward the 20,000-node budget. Omission still selects 0.2.0-draft.
 
 中文说明。显式选择0.3后，类型别名及属性以结构树保留分支和真实成员。联合允许同时满足多个分支。未知匿名成员不能静默省略，函数返回形状继续原签名投影。四MiB来源与千入口限制保持。
+
+## Generic and array wrappers
+
+Explicit project version 0.4.0-draft adds type applications, array elements and readonly operands to the existing structural tree. Generic target names are lexical source references, with source-ordered argument indices. The producer preserves syntax without evaluating utility types or inferring builtin identities. Select contractVersion in extractTsDocProject(), options.extractionVersion in the runner/producer, or --extraction-version in project CLI mode. Extraction and bridge use 0.4, HIA core stays 0.2.0, and direct maps stay 1.1.0. Earlier versions retain exact reading and their original default/rejection boundaries. Unsupported wrappers concealing members still fail.
+
+中文说明。0.4保留泛型目标与实参、数组元素及readonly操作数，具名引用不按字符串认定内建含义。结构节点只有来源事实，物理成员保留双语。显式重新提取授权源码后迁移，旧0.3包装拒绝与0.2默认保持。

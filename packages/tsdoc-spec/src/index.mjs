@@ -66,5 +66,10 @@ export {TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION,TSDOC_PROJECT_BRIDGE_SCHEMA_ID,TSD
  * @lang zh-CN 显式0.3类型表达式身份、种类与schema，旧常量和默认版本保持。
  * @lang en Explicit 0.3 type-expression identity, kinds and schemas, preserving legacy constants and defaults.
  */
-export {TSDOC_STRUCTURED_PROJECT_VERSION,TSDOC_TYPE_EXPRESSION_KINDS} from "./type-expressions.mjs";
+export {TSDOC_STRUCTURED_PROJECT_VERSION,TSDOC_TYPE_EXPRESSION_KINDS,TSDOC_WRAPPED_PROJECT_VERSION,TSDOC_WRAPPED_TYPE_EXPRESSION_KINDS} from "./type-expressions.mjs";
 export {TSDOC_STRUCTURED_EXTRACTION_SCHEMA_ID,TSDOC_STRUCTURED_BRIDGE_SCHEMA_ID,TSDOC_STRUCTURED_EXTRACTION_JSON_SCHEMA,TSDOC_STRUCTURED_BRIDGE_JSON_SCHEMA} from "./structured-project.mjs";
+/**
+ * @lang zh-CN 显式0.4包装schema，旧schema导出不变。
+ * @lang en Explicit 0.4 wrapper schemas, retaining legacy schema exports.
+ */
+export {TSDOC_WRAPPED_EXTRACTION_SCHEMA_ID,TSDOC_WRAPPED_BRIDGE_SCHEMA_ID,TSDOC_WRAPPED_EXTRACTION_JSON_SCHEMA,TSDOC_WRAPPED_BRIDGE_JSON_SCHEMA} from "./wrapped-project.mjs";
