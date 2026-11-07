@@ -9,6 +9,7 @@ import { createRequire } from "node:module";
 import { API, SymbolFlags } from "typescript/unstable/sync";
 import { SyntaxKind } from "typescript/unstable/ast";
 import { parseTSDocComment } from "./index.mjs";
+import {TSDOC_STRUCTURED_PROJECT_VERSION,TSDOC_TYPE_EXPRESSION_KINDS} from "@hia-doc/tsdoc-spec";
 
 /**
  * @lang zh-CN 核验并标准化显式工作区内的相对路径，绝不展开点段或编码。
@@ -112,10 +113,15 @@ function signatureFor(node,checker) {
  * @param {string} request.workspaceRoot - 允许读取源码的目录。 Authorized source root.
  * @param {string[]} request.entrypoints - 相对模块入口，最多1000个。 Relative module entries, at most 1000.
  * @param {string} [request.defaultLocale="en"] - 原注释默认语言，不产生翻译。 Original comment locale, without translation generation.
+ * @param {string} [request.contractVersion="0.2.0-draft"] <lang><zh-CN>精确项目身份，0.3显式生成类型表达式。</zh-CN><en>Exact project identity, explicitly selecting type expressions with 0.3.</en></lang>
  * @returns {object} 独立0.2.0-draft提取工件；未解析绑定保留error诊断。 Independent 0.2.0-draft extraction, retaining errors for unresolved bindings.
  * @throws {Error} 路径、输入数量、文件或编译器处理失败；固定诊断不回显本机路径。 Invalid paths, counts, files, or compiler processing, without machine-path disclosure.
  */
 export function extractTsDocProject(request) {
+  // <lang><zh-CN>调用方必须精确选择新模式，省略保留原项目工件及树形。</zh-CN><en>Callers select the new mode exactly; omission retains original project artifacts and trees.</en></lang>
+  const version=request?.contractVersion===undefined ? "0.2.0-draft" : request.contractVersion;
+  if(!["0.2.0-draft",TSDOC_STRUCTURED_PROJECT_VERSION].includes(version)) throw new Error("Unsupported TypeScript project version.");
+  const structured=version===TSDOC_STRUCTURED_PROJECT_VERSION;
   // <lang lang="zh-CN">错误只返回固定公开说明；真实根仅供本次编译器读取边界使用。</lang><lang lang="en">Return fixed public errors; the real root serves only this compiler read boundary.</lang>
   let root;
   try {root=fs.realpathSync(request?.workspaceRoot);} catch {throw new Error("Invalid TypeScript project root.");}
@@ -186,7 +192,18 @@ export function extractTsDocProject(request) {
       const id="ast:"+createHash("sha256").update(JSON.stringify([modulePath,name,sourcePath,node.getStart(source),node.end,parentId ?? null])).digest("hex");
       const comment=commentFor(node,locale);
       symbols.push({id,name,kind:kinds[syntax],classification:typeOnly ? "type-only" : "runtime",exported:!parentId,...(parentId ? {parentId} : {}),signature:signatureFor(node,checker),source:{path:sourcePath,range:nodeRange(node),rangeSource:"typescript-ast",rangeConvention:{endBoundary:"exclusive",columnUnit:"utf16-code-unit"},confidence:"high"},...(comment ? {comment} : {}),metadata:{syntaxKind:syntax,modulePath},runtime:{emitted:false,emitStatus:"unverified",jsName:name}});
-      for(const member of node.members ?? node.type?.members ?? []) {
+      // <lang><zh-CN>0.3类型别名和属性经独立表达式根保留分支；旧版仍走原直接成员投影。</zh-CN><en>0.3 aliases and properties retain branches through an expression root; legacy mode keeps its direct-member projection.</en></lang>
+      const typed=structured && node.type && ["TypeAliasDeclaration","PropertySignature","PropertyDeclaration","IndexSignature"].includes(syntax);
+      const expandType=typed && (syntax==="TypeAliasDeclaration" || isStructuredType(node.type));
+      if(expandType) {
+        symbols.at(-1).metadata.typeExpressionRoot=true;
+        addTypeExpression(node.type,modulePath,id);
+      } else if(typed && hasTypeMembers(node.type)) {
+        diagnostics.push({code:"TSDOC_TYPE_EXPRESSION_UNSUPPORTED",severity:"error",message:"Type expression contains unsupported anonymous members.",path:sourcePath});
+      }
+      // <lang><zh-CN>表达式已拥有匿名成员时不再重复添加；其它声明仍复用原直接成员列表。</zh-CN><en>Do not duplicate anonymous members already owned by an expression; other declarations reuse the original direct-member list.</en></lang>
+      const members=expandType ? [] : node.members ?? node.type?.members ?? [];
+      for(const member of members) {
         // <lang lang="zh-CN">仅按实际访问修饰符隐藏private；保护成员保留其修饰符与声明，不执行初始化器。</lang><lang lang="en">Hide explicit private members; protected members retain modifiers and declarations without evaluating initializers.</lang>
         if(member.modifiers?.some(modifier=>modifier.kind===SyntaxKind.PrivateKeyword) || member.name?.kind===SyntaxKind.PrivateIdentifier) continue;
         addDeclaration(member,member.name?.getText() ?? SyntaxKind[member.kind],modulePath,id,typeOnly);
@@ -202,6 +219,61 @@ export function extractTsDocProject(request) {
       if(symbols.length>20000) throw new Error();
       activeDeclarations.delete(declarationKey);
       return id;
+    }
+    /**
+     * @lang zh-CN 括号透明识别对象、联合和交叉，不按源码文本猜语义。
+     * @lang en Recognizes objects, unions and intersections through transparent parentheses without textual guesses.
+     * @param {object} node <lang><zh-CN>原生类型节点。</zh-CN><en>Native type node.</en></lang>
+     * @returns {boolean} <lang><zh-CN>是否需结构化展开。</zh-CN><en>Whether structural expansion is needed.</en></lang>
+     */
+    function isStructuredType(node) {
+      while(node.kind===SyntaxKind.ParenthesizedType) node=node.type;
+      return [SyntaxKind.TypeLiteral,SyntaxKind.UnionType,SyntaxKind.IntersectionType].includes(node.kind);
+    }
+    /**
+     * @lang zh-CN 不透明类型下若有可文档化成员便拒绝，避免数组或函数包装隐藏源码节点。
+     * @lang en Refuses opaque types containing documentable members, preventing arrays or functions from hiding source nodes.
+     * @param {object} node <lang><zh-CN>待检查类型。</zh-CN><en>Type to inspect.</en></lang>
+     * @returns {boolean} <lang><zh-CN>是否含实际成员。</zh-CN><en>Whether physical members occur.</en></lang>
+     */
+    function hasTypeMembers(node) {
+      if(node.members?.length) return true;
+      return Boolean(node.forEachChild(child=>hasTypeMembers(child) || undefined));
+    }
+    /**
+     * @lang zh-CN 生成有限类型树，分支按原顺序编号，结构节点只有源码签名和范围。
+     * @lang en Builds a bounded type tree with source-ordered branch indices and source-only signatures/ranges for structural nodes.
+     * @param {object} node <lang><zh-CN>实际类型节点。</zh-CN><en>Actual type node.</en></lang>
+     * @param {string} modulePath <lang><zh-CN>公开入口。</zh-CN><en>Public entry.</en></lang>
+     * @param {string} parentId <lang><zh-CN>已生成父项。</zh-CN><en>Emitted parent.</en></lang>
+     * @param {number} [branchIndex] <lang><zh-CN>联合或交叉的零基分支。</zh-CN><en>Zero-based union/intersection branch.</en></lang>
+     * @returns {void} <lang><zh-CN>追加实际结构节点及成员。</zh-CN><en>Appends actual structure and member nodes.</en></lang>
+     */
+    function addTypeExpression(node,modulePath,parentId,branchIndex) {
+      // <lang><zh-CN>括号保留在父签名内，表达式自身使用内层节点的精确范围。</zh-CN><en>Parent signatures retain parentheses while expressions use precise inner-node ranges.</en></lang>
+      while(node.kind===SyntaxKind.ParenthesizedType) node=node.type;
+      const source=node.getSourceFile();
+      const sourcePath=path.relative(root,source.fileName).split(path.sep).join("/");
+      const syntax=SyntaxKind[node.kind];
+      const operator=({TypeLiteral:"object",UnionType:"union",IntersectionType:"intersection"})[syntax] ?? "opaque";
+      if(operator==="opaque" && hasTypeMembers(node)) {
+        diagnostics.push({code:"TSDOC_TYPE_EXPRESSION_UNSUPPORTED",severity:"error",message:"Type expression contains unsupported anonymous members.",path:sourcePath});
+        return;
+      }
+      // <lang><zh-CN>身份区分结构角色及父项，重复分支名和多公开别名不会覆盖；派生节点计入原总预算。</zh-CN><en>Identities distinguish roles and parents so repeated names and public aliases cannot collide; derived nodes count against the original total budget.</en></lang>
+      const id="ast:"+createHash("sha256").update(JSON.stringify(["type-expression",modulePath,sourcePath,node.getStart(source),node.end,parentId])).digest("hex");
+      symbols.push({
+        id,name:operator==="opaque" ? "type" : operator,kind:TSDOC_TYPE_EXPRESSION_KINDS[operator],classification:"type-only",exported:false,parentId,
+        signature:node.getText(),source:{path:sourcePath,range:nodeRange(node),rangeSource:"typescript-ast",rangeConvention:{endBoundary:"exclusive",columnUnit:"utf16-code-unit"},confidence:"high"},
+        metadata:{syntaxKind:syntax,modulePath,typeExpression:{operator,syntaxKind:syntax,...(branchIndex!==undefined ? {branchIndex} : {})}},
+        runtime:{emitted:false,emitStatus:"unverified"}
+      });
+      if(symbols.length>20000) throw new Error();
+      if(operator==="object") {
+        for(const member of node.members) addDeclaration(member,member.name?.getText() ?? SyntaxKind[member.kind],modulePath,id,true);
+      } else if(operator==="union" || operator==="intersection") {
+        for(const [index,branch] of node.types.entries()) addTypeExpression(branch,modulePath,id,index);
+      }
     }
     for(const entry of entries) {
       // <lang><zh-CN>入口语法错误固定化为公开诊断；导出表由checker裁决，不靠文本匹配入口文件。</zh-CN><en>Entry syntax errors become fixed public diagnostics; the checker resolves exports instead of text matching entry files.</en></lang>
@@ -222,7 +294,7 @@ export function extractTsDocProject(request) {
       }
       modules.push({path:entry,exports:exports.sort((a,b)=>a.name.localeCompare(b.name,"en"))});
     }
-    return {contract:"hia-tsdoc-extraction",contractVersion:"0.2.0-draft",producer:{name:"@hia-doc/ts-doc-extractor",version:"0.1.3",backend:"typescript-native-7.0.2"},profile:{id:"ts-jsdoc-bridge",version:"0.2.0-draft"},source:{path:entries[0],language:"typescript",sourcesContentPolicy:"none"},artifacts:[],defaultLocale:locale,locales:[...new Set([locale,...symbols.flatMap(symbol=>symbol.comment?.i18n?.locales ?? [])])],modules,symbols,comments:symbols.filter(symbol=>symbol.comment).map(symbol=>({symbolId:symbol.id,...symbol.comment})),diagnostics,metadata:{extractor:{name:"@hia-doc/ts-doc-extractor",mode:"typescript-native-project"},ordinarySourceMapStatus:"not-produced",sourcesContentPolicy:"none"}};
+    return {contract:"hia-tsdoc-extraction",contractVersion:version,producer:{name:"@hia-doc/ts-doc-extractor",version:"0.1.3",backend:"typescript-native-7.0.2"},profile:{id:"ts-jsdoc-bridge",version},source:{path:entries[0],language:"typescript",sourcesContentPolicy:"none"},artifacts:[],defaultLocale:locale,locales:[...new Set([locale,...symbols.flatMap(symbol=>symbol.comment?.i18n?.locales ?? [])])],modules,symbols,comments:symbols.filter(symbol=>symbol.comment).map(symbol=>({symbolId:symbol.id,...symbol.comment})),diagnostics,metadata:{extractor:{name:"@hia-doc/ts-doc-extractor",mode:"typescript-native-project"},...(structured ? {typeExpressions:version} : {}),ordinarySourceMapStatus:"not-produced",sourcesContentPolicy:"none"}};
   } catch {throw new Error("TypeScript project extraction failed.");}
   finally {snapshot?.dispose();api.close();}
 }

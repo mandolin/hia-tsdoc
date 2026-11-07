@@ -54,7 +54,9 @@ async function normalize(request) {
   // <lang><zh-CN>输入组与选项均显式限界，默认语言不产生翻译；源码内容政策固定none。</zh-CN><en>Groups/options are explicitly bounded; the default locale creates no translations, and source-content policy stays none.</en></lang>
   if(!Array.isArray(request.inputs) || !request.inputs.length || request.inputs.length>1000) throw new Error("Invalid project input groups.");
   const options=request.options ?? {};
-  record(options,["defaultLocale","emitDocSourceMap","writeResultManifest"]);
+  record(options,["defaultLocale","emitDocSourceMap","writeResultManifest","extractionVersion"]);
+  // <lang><zh-CN>新表达式模型必须精确选择，未声明仍使用0.2项目链。</zh-CN><en>The expression model requires exact selection; omission retains the 0.2 project chain.</en></lang>
+  if(options.extractionVersion!==undefined && !["0.2.0-draft","0.3.0-draft"].includes(options.extractionVersion)) throw new Error("Unsupported project extraction version.");
   if(options.defaultLocale!==undefined && (typeof options.defaultLocale!=="string" || !/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(options.defaultLocale))) throw new Error("Invalid project locale.");
   for(const key of ["emitDocSourceMap","writeResultManifest"]) if(options[key]!==undefined && typeof options[key]!=="boolean") throw new Error("Invalid project boolean option.");
   const profileIds=request.profileIds ?? ["tsdoc"];
@@ -145,7 +147,7 @@ export async function runTsDocProject(request,context={}) {
     context.reportProgress?.({phase:"extract",current:index,total:normalized.inputs.length,message:input.entries[0]});
     try {
       // <lang><zh-CN>抽取只调用通用内核，错误组不登记成功工件；公开失败固定化，私有根不进入结果。</zh-CN><en>Extraction calls only the generic core; error groups register no successful artifacts, and fixed failure messages exclude private roots.</en></lang>
-      const extraction=extractTsDocProject({workspaceRoot:normalized.workspaceRoot,entrypoints:input.entries,defaultLocale:normalized.options.defaultLocale ?? "en"});
+      const extraction=extractTsDocProject({workspaceRoot:normalized.workspaceRoot,entrypoints:input.entries,defaultLocale:normalized.options.defaultLocale ?? "en",contractVersion:normalized.options.extractionVersion ?? "0.2.0-draft"});
       diagnostics.push(...extraction.diagnostics);
       if(extraction.diagnostics.some(item=>item.severity==="error")) continue;
       if(context.signal?.aborted) {diagnostics.push({code:"TSDOC_PROJECT_ABORTED",severity:"error",message:"Project extraction was aborted."});break;}

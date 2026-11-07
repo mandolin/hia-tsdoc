@@ -2,7 +2,7 @@
  * @lang zh-CN 项目提取的完整语义桥接与两代读取；不运行JSDoc或虚构JavaScript产物。
  * @lang en Full semantic bridging and two-generation reading for project extraction, without running JSDoc or fabricating JavaScript artifacts.
  */
-import {readTsDocExtraction,TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION} from "@hia-doc/tsdoc-spec";
+import {readTsDocExtraction,TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION,TSDOC_STRUCTURED_PROJECT_VERSION} from "@hia-doc/tsdoc-spec";
 
 /**
  * @lang zh-CN 保留每条声明的签名/注释/来源/父项，明确没有发射证明；输入对象不变。
@@ -14,15 +14,15 @@ import {readTsDocExtraction,TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION} from "@hia-do
  */
 export function tsDocProjectToJsDocBridgeArtifact(extraction,options={}) {
   readTsDocExtraction(extraction);
-  if(extraction.contractVersion!=="0.2.0-draft" || !options || typeof options!=="object" || Array.isArray(options) || Object.keys(options).length) throw new Error("Invalid project bridge request.");
+  if(![TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION,TSDOC_STRUCTURED_PROJECT_VERSION].includes(extraction.contractVersion) || !options || typeof options!=="object" || Array.isArray(options) || Object.keys(options).length) throw new Error("Invalid project bridge request.");
   // <lang><zh-CN>分类投影不丢字段，运行时分类不意味着已经发射；类型也保留全部文档。</zh-CN><en>Classification projection loses no fields; runtime classification does not imply emission, and types retain their full documentation too.</en></lang>
   const project=(classification,status)=>extraction.symbols.filter(symbol=>symbol.classification===classification).map(symbol=>({...symbol,bridgeStatus:status}));
   return {
-    contract:"hia-ts-jsdoc-bridge",contractVersion:TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION,
+    contract:"hia-ts-jsdoc-bridge",contractVersion:extraction.contractVersion,
     producer:{name:"@hia-doc/ts-jsdoc-bridge",version:"0.1.3"},profile:extraction.profile,source:extraction.source,modules:extraction.modules,
     defaultLocale:extraction.defaultLocale ?? "en",locales:extraction.locales ?? [extraction.defaultLocale ?? "en"],
     artifact:null,runtimeSymbols:project("runtime","not-emitted"),typeOnlySymbols:project("type-only","ts-only"),diagnostics:extraction.diagnostics,
-    metadata:{sourceContract:extraction.contract,sourceContractVersion:extraction.contractVersion,sourceProducer:extraction.producer,symbolOrder:extraction.symbols.map(symbol=>symbol.id),ordinarySourceMapStatus:"not-produced",sourcesContentPolicy:"none"}
+    metadata:{sourceContract:extraction.contract,sourceContractVersion:extraction.contractVersion,sourceProducer:extraction.producer,symbolOrder:extraction.symbols.map(symbol=>symbol.id),...(extraction.metadata?.typeExpressions ? {typeExpressions:extraction.metadata.typeExpressions} : {}),ordinarySourceMapStatus:"not-produced",sourcesContentPolicy:"none"}
   };
 }
 
@@ -36,7 +36,7 @@ export function tsDocProjectToJsDocBridgeArtifact(extraction,options={}) {
 export function readTsJsDocBridgeArtifact(artifact) {
   if(!artifact || artifact.contract!=="hia-ts-jsdoc-bridge" || !Array.isArray(artifact.runtimeSymbols) || !Array.isArray(artifact.typeOnlySymbols)) throw new Error("Invalid TypeScript bridge.");
   if(artifact.contractVersion==="0.1.0-draft") return artifact;
-  if(artifact.contractVersion!==TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION) throw new Error("Unsupported TypeScript bridge version.");
+  if(![TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION,TSDOC_STRUCTURED_PROJECT_VERSION].includes(artifact.contractVersion)) throw new Error("Unsupported TypeScript bridge version.");
   if(artifact.artifact!==null || !Array.isArray(artifact.diagnostics)
     || artifact.runtimeSymbols.some(symbol=>symbol.classification!=="runtime" || symbol.bridgeStatus!=="not-emitted")
     || artifact.typeOnlySymbols.some(symbol=>symbol.classification!=="type-only" || symbol.bridgeStatus!=="ts-only")) throw new Error("Invalid TypeScript project bridge.");
@@ -46,6 +46,9 @@ export function readTsJsDocBridgeArtifact(artifact) {
   const order=artifact.metadata?.symbolOrder;
   const symbolIds=new Set(symbols.map(symbol=>symbol.id));
   if(!Array.isArray(order) || order.length!==symbols.length || new Set(order).size!==order.length || order.some(id=>!symbolIds.has(id))) throw new Error("Invalid TypeScript bridge symbol order.");
-  readTsDocExtraction({contract:"hia-tsdoc-extraction",contractVersion:"0.2.0-draft",producer:artifact.producer,profile:artifact.profile,source:artifact.source,modules:artifact.modules,symbols,artifacts:[],comments:symbols.filter(symbol=>symbol.comment).map(symbol=>({symbolId:symbol.id,...symbol.comment})),diagnostics:artifact.diagnostics});
+  if(artifact.contractVersion===TSDOC_STRUCTURED_PROJECT_VERSION && (artifact.metadata.sourceContract!=="hia-tsdoc-extraction" || artifact.metadata.sourceContractVersion!==artifact.contractVersion)) throw new Error("Invalid structured TypeScript bridge source.");
+  // <lang><zh-CN>按原顺序复核分支，不按分类数组重排来源树；0.3标记必须真实贯穿桥接。</zh-CN><en>Check branches in original order instead of classification-array order; the 0.3 mode marker must survive bridging.</en></lang>
+  const byId=new Map(symbols.map(symbol=>[symbol.id,symbol]));
+  readTsDocExtraction({contract:"hia-tsdoc-extraction",contractVersion:artifact.contractVersion,producer:artifact.producer,profile:artifact.profile,source:artifact.source,modules:artifact.modules,symbols:order.map(id=>byId.get(id)),artifacts:[],comments:symbols.filter(symbol=>symbol.comment).map(symbol=>({symbolId:symbol.id,...symbol.comment})),diagnostics:artifact.diagnostics,metadata:artifact.metadata});
   return artifact;
 }

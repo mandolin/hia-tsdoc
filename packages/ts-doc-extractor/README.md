@@ -40,3 +40,9 @@ Each entry is a canonical path relative to the authorized workspace. Imported so
 Signatures omit function implementations, preserve explicit syntax and use compiler-inferred variable types when needed. Source ranges use the actual original bytes' UTF-16 positions with one-based coordinates and exclusive ends; CRLF is not normalized. Descriptions, remarks, parameters, type parameters, returns, throws and examples retain field-level bilingual data through the existing `@lang` and inline `<lang>` parser. No translation is generated. Parameter properties, inherited members and complete TypeScript semantic diagnostics are not promised by this draft. Unsupported exposed declaration syntax is an error.
 
 The runner now exposes `runTsDocProject()` and explicit `hia-tsdoc --project` selection; its original single-file/config mode keeps the scanner behavior. The project API does not create ordinary JavaScript source maps or coordinate evidence; `emitted: false` with `emitStatus: "unverified"` records the absence of emission proof. This source candidate is not yet an npm release.
+
+## Structured project mode
+
+Pass contractVersion: '0.3.0-draft' to extractTsDocProject() to preserve anonymous objects, unions and intersections in type aliases and properties. Parenthesized types are transparent. Every direct branch has a zero-based source-order index and a representative node, including opaque leaves. Structural nodes retain actual signatures/ranges and have no invented comments. Physical members retain their own comments and sources. Opaque wrappers hiding anonymous members produce an error. Function return shapes keep their existing signature projection. All structural nodes count toward the 20,000-node budget. Omission still selects 0.2.0-draft.
+
+中文说明。显式选择0.3后，类型别名及属性以结构树保留分支和真实成员。联合允许同时满足多个分支。未知匿名成员不能静默省略，函数返回形状继续原签名投影。四MiB来源与千入口限制保持。

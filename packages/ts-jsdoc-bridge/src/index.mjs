@@ -13,7 +13,7 @@ export {tsDocProjectToJsDocBridgeArtifact,readTsJsDocBridgeArtifact} from "./pro
  */
 export function tsDocToJsDocBridgeArtifact(tsArtifact, options = {}) {
   // <lang><zh-CN>新版不经过旧默认JS路径分支；未知身份必须拒绝。</zh-CN><en>New artifacts bypass the legacy default JS path branch; unknown versions must be refused.</en></lang>
-  if(tsArtifact?.contractVersion==="0.2.0-draft") return tsDocProjectToJsDocBridgeArtifact(tsArtifact,options);
+  if(["0.2.0-draft","0.3.0-draft"].includes(tsArtifact?.contractVersion)) return tsDocProjectToJsDocBridgeArtifact(tsArtifact,options);
   if(tsArtifact?.contractVersion!=="0.1.0-draft") throw new Error("Unsupported TypeScript extraction version.");
   assertTsDocArtifact(tsArtifact);
   const jsPath = normalizePath(options.jsPath ?? "dist/output.js");

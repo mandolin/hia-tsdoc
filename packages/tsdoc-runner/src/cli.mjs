@@ -14,6 +14,8 @@ const { values, positionals } = parseArgs({
     config: { type: "string", short: "c" },
     // <lang><zh-CN>项目模式显式选择通用AST链，不改变旧配置身份。</zh-CN><en>Project mode explicitly selects the generic AST chain without changing legacy config identity.</en></lang>
     project: { type: "boolean" },
+    // <lang><zh-CN>显式项目版本开关，旧配置及非项目模式不接受。</zh-CN><en>Explicit project-version switch, refused by legacy configuration and nonproject mode.</en></lang>
+    "extraction-version": { type: "string" },
     "default-locale": { type: "string" },
     help: { type: "boolean", short: "h" },
     lib: { type: "string" },
@@ -35,7 +37,7 @@ const { values, positionals } = parseArgs({
 });
 
 if (values.help) {
-  process.stdout.write("Project mode: hia-tsdoc --project [--default-locale en] [--no-doc-source-map] --out-dir dist/tsdoc-project <entry.ts...>\nProject mode uses direct source linkage and does not emit JavaScript; legacy --config/compiler/coordinate options cannot be combined.\n\n");
+  process.stdout.write("Project mode: hia-tsdoc --project [--extraction-version 0.3.0-draft] [--default-locale en] [--no-doc-source-map] --out-dir dist/tsdoc-project <entry.ts...>\nProject mode defaults to 0.2.0-draft and uses direct source linkage without JavaScript emission; legacy --config/compiler/coordinate options cannot be combined.\n\n");
   process.stdout.write(`HIA TSDoc ${TSDOC_RUNNER_VERSION}\n\nUsage:\n  hia-tsdoc --config tsdoc.config.json\n  hia-tsdoc [options] <entry.ts...>\n\nOptions:\n  -c, --config <path>\n  -o, --out-dir <path>\n      --workspace-root <path>\n      --target <name>\n      --module <name>\n      --module-resolution <name>\n      --lib <name[,name...]>\n      --types <name[,name...]>\n      --sources-content-policy <none|reference|embed>\n      --no-doc-source-map\n      --coordinate-profile\n      --no-skip-lib-check\n  -v, --version\n`);
   process.exit(0);
 }
@@ -46,7 +48,7 @@ if (values.version) {
 }
 
 try {
-  if(!values.project && values["default-locale"]!==undefined) throw new TypeError("default-locale requires project mode.");
+  if(!values.project && (values["default-locale"]!==undefined || values["extraction-version"]!==undefined)) throw new TypeError("Project options require project mode.");
   const request = values.project
     ? createProjectRequest(values,positionals)
     : values.config
@@ -110,9 +112,9 @@ function createCliRequest(cliValues, inputs) {
  */
 function createProjectRequest(cliValues,inputs) {
   // <lang><zh-CN>选项白名单对应通用内核实际能力，不能通过config或坐标开关绕开版本边界。</zh-CN><en>The option allowlist matches actual generic-core capabilities; config/coordinate flags cannot bypass version boundaries.</en></lang>
-  if(!inputs.length || Object.keys(cliValues).some(key=>!["project","default-locale","workspace-root","out-dir","no-doc-source-map"].includes(key))) throw new TypeError("Unsupported project CLI options.");
+  if(!inputs.length || Object.keys(cliValues).some(key=>!["project","default-locale","extraction-version","workspace-root","out-dir","no-doc-source-map"].includes(key))) throw new TypeError("Unsupported project CLI options.");
   const workspaceRoot=path.resolve(process.cwd(),cliValues["workspace-root"] ?? ".");
-  return {workspaceRoot,outputDirectory:path.resolve(workspaceRoot,cliValues["out-dir"] ?? "dist/tsdoc-project"),inputs:[{kind:"typescript-project",paths:inputs}],options:{emitDocSourceMap:!cliValues["no-doc-source-map"],defaultLocale:cliValues["default-locale"] ?? "en"}};
+  return {workspaceRoot,outputDirectory:path.resolve(workspaceRoot,cliValues["out-dir"] ?? "dist/tsdoc-project"),inputs:[{kind:"typescript-project",paths:inputs}],options:{emitDocSourceMap:!cliValues["no-doc-source-map"],defaultLocale:cliValues["default-locale"] ?? "en",...(cliValues["extraction-version"]!==undefined ? {extractionVersion:cliValues["extraction-version"]} : {})}};
 }
 
 function parseCommaList(value) {

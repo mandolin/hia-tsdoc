@@ -62,3 +62,9 @@ export function normalizeTSDocTag(tag) {
 export { TSDOC_PROJECT_EXTRACTION_CONTRACT_VERSION, TSDOC_PROJECT_EXTRACTION_SCHEMA_ID, TSDOC_PROJECT_PROFILE_VERSION, TSDOC_PROJECT_EXTRACTION_JSON_SCHEMA, readTsDocExtraction } from "./project.mjs";
 /** @lang zh-CN 无发射项目桥接采用独立草案身份。 @lang en Non-emitting project bridges use an independent draft identity. */
 export {TSDOC_PROJECT_BRIDGE_CONTRACT_VERSION,TSDOC_PROJECT_BRIDGE_SCHEMA_ID,TSDOC_PROJECT_BRIDGE_JSON_SCHEMA} from "./project-bridge.mjs";
+/**
+ * @lang zh-CN 显式0.3类型表达式身份、种类与schema，旧常量和默认版本保持。
+ * @lang en Explicit 0.3 type-expression identity, kinds and schemas, preserving legacy constants and defaults.
+ */
+export {TSDOC_STRUCTURED_PROJECT_VERSION,TSDOC_TYPE_EXPRESSION_KINDS} from "./type-expressions.mjs";
+export {TSDOC_STRUCTURED_EXTRACTION_SCHEMA_ID,TSDOC_STRUCTURED_BRIDGE_SCHEMA_ID,TSDOC_STRUCTURED_EXTRACTION_JSON_SCHEMA,TSDOC_STRUCTURED_BRIDGE_JSON_SCHEMA} from "./structured-project.mjs";

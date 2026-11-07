@@ -2,6 +2,7 @@
  * @lang zh-CN 通用项目提取0.2.0-draft独立身份与精确两代读取；旧对象保持原引用，不自动迁移。
  * @lang en Independent project extraction 0.2.0-draft identity and exact two-generation reading; legacy objects retain their references without automatic migration.
  */
+import {TSDOC_STRUCTURED_PROJECT_VERSION, validateTypeExpressions} from "./type-expressions.mjs";
 /** @lang zh-CN 新通用项目提取草案，独立于旧扫描器身份。 @lang en New generic-project draft, separate from the legacy scanner identity. */
 export const TSDOC_PROJECT_EXTRACTION_CONTRACT_VERSION="0.2.0-draft";
 /** @lang zh-CN 新草案的可复核schema身份，未宣称正式发行。 @lang en Inspectable schema identity for the new draft, without claiming release. */
@@ -67,8 +68,8 @@ function validRange(range) {return range && [range.start?.line,range.start?.colu
 export function readTsDocExtraction(artifact) {
   if(!artifact || artifact.contract!=="hia-tsdoc-extraction" || !Array.isArray(artifact.symbols)) throw new Error("Invalid TypeScript extraction artifact.");
   if(artifact.contractVersion==="0.1.0-draft") return artifact;
-  if(artifact.contractVersion!==TSDOC_PROJECT_EXTRACTION_CONTRACT_VERSION) throw new Error("Unsupported TypeScript extraction version.");
-  if(!artifact.producer?.name || !artifact.producer?.version || artifact.profile?.id!=="ts-jsdoc-bridge" || artifact.profile?.version!==TSDOC_PROJECT_PROFILE_VERSION
+  if(![TSDOC_PROJECT_EXTRACTION_CONTRACT_VERSION,TSDOC_STRUCTURED_PROJECT_VERSION].includes(artifact.contractVersion)) throw new Error("Unsupported TypeScript extraction version.");
+  if(!artifact.producer?.name || !artifact.producer?.version || artifact.profile?.id!=="ts-jsdoc-bridge" || artifact.profile?.version!==artifact.contractVersion
     || !safePath(artifact.source?.path) || artifact.source?.language!=="typescript" || artifact.source?.sourcesContentPolicy!=="none"
     || !Array.isArray(artifact.artifacts) || !Array.isArray(artifact.modules) || !artifact.modules.length || artifact.modules.length>1000 || !Array.isArray(artifact.comments) || !Array.isArray(artifact.diagnostics) || artifact.symbols.length>20000) throw new Error("Invalid TypeScript project extraction.");
   // <lang lang="zh-CN">先建立唯一声明身份再核公开绑定，旧工件不能仅换版本号通过。</lang><lang lang="en">Establish unique declaration identities before checking export bindings so relabeled legacy objects cannot pass.</lang>
@@ -96,5 +97,6 @@ export function readTsDocExtraction(artifact) {
   }
   for(const symbol of artifact.symbols) if(!modulePaths.has(symbol.metadata.modulePath) || symbol.parentId && byId.get(symbol.parentId).metadata.modulePath!==symbol.metadata.modulePath) throw new Error("Invalid TypeScript project membership.");
   for(const comment of artifact.comments) if(!ids.has(comment?.symbolId) || !validRange(comment.range)) throw new Error("Invalid TypeScript project comment reference.");
+  if(artifact.contractVersion===TSDOC_STRUCTURED_PROJECT_VERSION) validateTypeExpressions(artifact);
   return artifact;
 }

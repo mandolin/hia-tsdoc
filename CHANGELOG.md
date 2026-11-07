@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add explicit project extraction/bridge 0.3.0-draft for source-preserving object, union and intersection type expressions. Preserve exact legacy readers and the default 0.2 project mode.
+- Coordinate project CLI/producer, existing HIA core projection and direct 1.1 maps. Enforce branch roles, source containment and the shared node budget.
+- 中文说明。新增显式结构类型模型及完整成员来源，旧默认保留，尚未发布npm版本。
+
+
+## Unreleased
+
 - Add explicit project runner/CLI mode and an SDK 1.0 project producer, using the same native extraction core and safe workspace-relative output rules.
 - Add an independently versioned full-field project bridge with exact legacy reading and explicit absence of JavaScript emission; register its actual artifact in direct source maps.
 - Add opt-in native TypeScript project extraction with real exports, aliases, constants, per-declaration overloads, types and public/protected members.
